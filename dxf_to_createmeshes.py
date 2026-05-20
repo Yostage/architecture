@@ -25,22 +25,49 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 DXF_PATH = Path(__file__).parent / "dxf_out" / "survey topo test.dxf"
 CONTOUR_LAYERS = {"CONT-HGH", "CONT-NML"}
+# MTEXT elevation labels live on the same layers as the contour lines.
+CONTOUR_LABEL_LAYERS = {"CONT-HGH", "CONT-NML"}
 OUTPUT_PATH = Path(__file__).parent / "createmeshes_payload.json"
+LABELS_OUTPUT_PATH = Path(__file__).parent / "createlabels_payload.json"
 
 # Archicad's JSON API always accepts coordinates in meters, regardless of the
 # project's display units. This survey is in feet, so every coordinate gets
 # scaled. 1 ft = 0.3048 m exactly.
 FOOT_TO_METER = 0.3048
 
+# Perimeter source:
+#   "property_line" — the PL-layer boundary (Shawn's method: "add mesh to
+#                     property boundary", contours beyond it are clipped).
+#   "concave_hull"  — concave hull of all contour vertices (full data extent).
+# Shawn's tutorial uses the property line, so that's the default.
+PERIMETER_MODE = "property_line"
+PERIMETER_LAYER = "PL"
+
 # Concave hull ratio (Shapely): 1.0 = convex hull, smaller = more concave.
 # 0.0 risks fragmenting, ~0.1–0.3 hugs the data tightly without artifacts.
 HULL_RATIO = 0.2
+
+# Endpoint clustering tolerance for stitching the PL boundary (feet). Survey
+# corners have sub-mm float noise; this absorbs it. ~15 mm.
+SNAP_FT = 0.05
+
+# Arc tessellation target chord length (feet) for curved property-line segments.
+ARC_TARGET_CHORD_FT = 3.0
 
 # Translate output so the mesh sits near Archicad's project origin instead of
 # at the survey's raw local coordinates (which are typically thousands of
 # meters away). Without this, the mesh is technically valid but invisible in
 # the default 3D view bounds.
 CENTER_TO_ORIGIN = True
+
+# Subline encoding mode:
+#   "polyline" — one subline per contour, preserving connectivity. Archicad
+#                stores these as level lines (user ridges). HYPOTHESIS: this is
+#                what lets the 2D plan show clean topo lines instead of
+#                triangulation — the drawing-set output Shawn needs.
+#   "points"   — one subline per vertex; no connectivity. Archicad free-TINs
+#                through them → smooth triangulated look (Shawn's stuck state).
+SUBLINE_MODE = "polyline"
 
 
 def coord3d(x: float, y: float, z: float) -> dict:
@@ -49,23 +76,23 @@ def coord3d(x: float, y: float, z: float) -> dict:
 
 
 def extract_contour_sublines(msp, base_z_m: float) -> list[dict]:
-    """ONE SUBLINE PER VERTEX. Matches Shawn's manual Magic-Wand workflow:
-    each contour vertex becomes an independent ridge point with no
-    connectivity to its neighbors. Archicad then triangulates a free TIN
-    through all points, giving the smooth-graded appearance of Shawn's
-    example mesh. (Earlier version preserved polyline connectivity, which
-    forced Archicad to honor each contour as a ridge and produced visibly
-    sharper terrain — geometrically more faithful but didn't visually
-    match Shawn's reference.)"""
+    """Emit sublines for CreateMeshes. Mode controlled by SUBLINE_MODE.
+
+    Archicad expects coord Z relative to the mesh `level`, so we subtract
+    base_z_m from each elevation."""
     sublines = []
     for poly in msp.query("LWPOLYLINE"):
         if poly.dxf.layer not in CONTOUR_LAYERS:
             continue
         z_rel = float(poly.dxf.elevation) * FOOT_TO_METER - base_z_m
-        for x, y, *_ in poly.get_points():
-            sublines.append({
-                "coordinates": [coord3d(x * FOOT_TO_METER, y * FOOT_TO_METER, z_rel)]
-            })
+        pts = [coord3d(x * FOOT_TO_METER, y * FOOT_TO_METER, z_rel)
+               for x, y, *_ in poly.get_points()]
+        if SUBLINE_MODE == "polyline":
+            if len(pts) >= 2:
+                sublines.append({"coordinates": pts})
+        else:  # "points"
+            for p in pts:
+                sublines.append({"coordinates": [p]})
     return sublines
 
 
@@ -92,38 +119,126 @@ def _collect_contour_vertices_ft(msp) -> list[tuple[float, float, float]]:
     return pts
 
 
+def _nearest_contour_z_ft(x: float, y: float, contour_pts: list) -> float:
+    """Elevation (ft) of the contour vertex nearest to (x, y). Used to give
+    property-line perimeter vertices a terrain-following Z instead of a flat
+    edge."""
+    return min(contour_pts, key=lambda p: (p[0] - x) ** 2 + (p[1] - y) ** 2)[2]
+
+
+def _arc_endpoints_ft(arc):
+    cx, cy, r = arc.dxf.center.x, arc.dxf.center.y, arc.dxf.radius
+    a0, a1 = math.radians(arc.dxf.start_angle), math.radians(arc.dxf.end_angle)
+    return ((cx + r * math.cos(a0), cy + r * math.sin(a0)),
+            (cx + r * math.cos(a1), cy + r * math.sin(a1)))
+
+
+def _tessellate_arc_ft(arc, from_pt, to_pt):
+    """Interior points of the arc from from_pt to to_pt (feet, exclusive)."""
+    cx, cy, r = arc.dxf.center.x, arc.dxf.center.y, arc.dxf.radius
+    a_from = math.atan2(from_pt[1] - cy, from_pt[0] - cx)
+    a0, a1 = math.radians(arc.dxf.start_angle), math.radians(arc.dxf.end_angle)
+    ccw_sweep = (a1 - a0) % (2 * math.pi)
+    a_to = math.atan2(to_pt[1] - cy, to_pt[0] - cx)
+    diff_ccw = (a_to - a_from) % (2 * math.pi)
+    going_ccw = abs(diff_ccw - ccw_sweep) < 1e-3
+    sweep = diff_ccw if going_ccw else -(2 * math.pi - diff_ccw)
+    n = max(2, math.ceil(r * abs(sweep) / ARC_TARGET_CHORD_FT))
+    for i in range(1, n):
+        a = a_from + sweep * (i / n)
+        yield (cx + r * math.cos(a), cy + r * math.sin(a))
+
+
+def _cluster_ids(points, tol):
+    """Assign each point a cluster id, merging points within tol of each other."""
+    centers, ids = [], []
+    for p in points:
+        hit = next((i for i, c in enumerate(centers)
+                    if math.hypot(p[0] - c[0], p[1] - c[1]) <= tol), None)
+        if hit is None:
+            centers.append(p)
+            ids.append(len(centers) - 1)
+        else:
+            ids.append(hit)
+    return ids
+
+
+def _walk_pl_loop(msp):
+    """Walk the PL layer's LINE + ARC segments into one closed polygon of
+    (x, y) feet, tessellating arcs. Returns None if it isn't a clean loop."""
+    segs = [e for e in msp if e.dxf.layer == PERIMETER_LAYER
+            and e.dxftype() in ("LINE", "ARC")]
+    if not segs:
+        return None
+    endpoints = []
+    for e in segs:
+        if e.dxftype() == "LINE":
+            endpoints.append(((e.dxf.start.x, e.dxf.start.y), (e.dxf.end.x, e.dxf.end.y)))
+        else:
+            endpoints.append(_arc_endpoints_ft(e))
+
+    flat = [p for pair in endpoints for p in pair]
+    cids = _cluster_ids(flat, SNAP_FT)
+    incidence: dict = defaultdict(list)
+    for i in range(len(segs)):
+        incidence[cids[2 * i]].append((i, "start"))
+        incidence[cids[2 * i + 1]].append((i, "end"))
+    if any(len(v) != 2 for v in incidence.values()):
+        return None  # not a single closed loop
+
+    walk, used, cur, direction = [], set(), 0, "forward"
+    while True:
+        s, x = endpoints[cur]
+        if direction == "forward":
+            walk.append((cur, s, x)); nxt = cids[2 * cur + 1]
+        else:
+            walk.append((cur, x, s)); nxt = cids[2 * cur]
+        used.add(cur)
+        if len(used) == len(segs):
+            break
+        cand = [(i, side) for (i, side) in incidence[nxt] if i != cur]
+        if len(cand) != 1:
+            return None
+        cur, side = cand[0]
+        direction = "forward" if side == "start" else "reverse"
+
+    poly = []
+    for idx, s_pt, e_pt in walk:
+        poly.append(s_pt)
+        if segs[idx].dxftype() == "ARC":
+            poly.extend(_tessellate_arc_ft(segs[idx], s_pt, e_pt))
+    return poly
+
+
 def assemble_perimeter(msp, base_z_m: float) -> tuple[list[dict], str]:
-    """Concave hull of contour vertices. Each hull vertex carries its source
-    contour's Z (relative to base_z_m). Mirrors Shawn's Magic-Wand workflow:
-    perimeter snaps to existing contours, so vertex Z follows the terrain."""
-    pts_ft = _collect_contour_vertices_ft(msp)
-    if len(pts_ft) < 3:
+    """Build the mesh perimeter per PERIMETER_MODE. Returns (coords, label)."""
+    contour_pts = _collect_contour_vertices_ft(msp)
+
+    if PERIMETER_MODE == "property_line":
+        pl = _walk_pl_loop(msp)
+        if pl:
+            perimeter = [
+                coord3d(x * FOOT_TO_METER, y * FOOT_TO_METER,
+                        _nearest_contour_z_ft(x, y, contour_pts) * FOOT_TO_METER - base_z_m)
+                for (x, y) in pl
+            ]
+            return perimeter, f"property line / PL layer ({len(perimeter)} vertices)"
+        # fall through to hull if PL can't be assembled
+        print("  PL layer not a clean loop; falling back to concave hull")
+
+    if len(contour_pts) < 3:
         return [], "no-contour-points"
-
-    # Build a lookup so we can recover Z after the 2D hull operation.
-    # Some vertices coincide in X/Y across contours (rare but possible);
-    # break ties by taking the median Z within a small bin.
     xy_to_zs: dict = defaultdict(list)
-    for x, y, z in pts_ft:
+    for x, y, z in contour_pts:
         xy_to_zs[(round(x, 3), round(y, 3))].append(z)
-
-    multipoint = MultiPoint([(x, y) for (x, y, _) in pts_ft])
-    hull = shapely.concave_hull(multipoint, ratio=HULL_RATIO)
+    hull = shapely.concave_hull(MultiPoint([(x, y) for x, y, _ in contour_pts]), ratio=HULL_RATIO)
     if not isinstance(hull, Polygon):
         return [], f"concave_hull returned {type(hull).__name__}"
-
     perimeter = []
-    for x, y in list(hull.exterior.coords)[:-1]:  # drop the closing duplicate
-        key = (round(x, 3), round(y, 3))
-        zs = xy_to_zs.get(key)
-        if not zs:
-            # Shouldn't happen with concave_hull on a MultiPoint input, but
-            # fall back to nearest-point search if it does.
-            zs = [min(pts_ft, key=lambda p: (p[0] - x) ** 2 + (p[1] - y) ** 2)[2]]
-        z_ft = sorted(zs)[len(zs) // 2]  # median
-        z_rel_m = (z_ft * FOOT_TO_METER) - base_z_m
-        perimeter.append(coord3d(x * FOOT_TO_METER, y * FOOT_TO_METER, z_rel_m))
-
+    for x, y in list(hull.exterior.coords)[:-1]:
+        zs = xy_to_zs.get((round(x, 3), round(y, 3))) or [_nearest_contour_z_ft(x, y, contour_pts)]
+        z_ft = sorted(zs)[len(zs) // 2]
+        perimeter.append(coord3d(x * FOOT_TO_METER, y * FOOT_TO_METER, z_ft * FOOT_TO_METER - base_z_m))
     return perimeter, f"concave hull (ratio={HULL_RATIO}, {len(perimeter)} vertices)"
 
 
@@ -159,6 +274,7 @@ def build_payload(msp) -> tuple[dict, str]:
             c["y"] -= offset_y
         mesh_level = 0.0
     else:
+        offset_x = offset_y = 0.0
         mesh_level = base_z_m
 
     payload = {
@@ -173,7 +289,31 @@ def build_payload(msp) -> tuple[dict, str]:
             }
         ]
     }
-    return payload, source
+    return payload, source, (offset_x, offset_y)
+
+
+def build_labels_payload(msp, offset_x_m: float, offset_y_m: float) -> dict:
+    """One text label per contour MTEXT, placed at its DWG position, sharing the
+    mesh's ft→m + centering transform so labels land on the contour lines."""
+    labels = []
+    for t in msp.query("MTEXT TEXT"):
+        if t.dxf.layer not in CONTOUR_LABEL_LAYERS:
+            continue
+        try:
+            text = t.plain_text() if t.dxftype() == "MTEXT" else t.dxf.text
+        except Exception:
+            text = None
+        if not text:
+            continue
+        ins = t.dxf.insert
+        x_m = float(ins.x) * FOOT_TO_METER - offset_x_m
+        y_m = float(ins.y) * FOOT_TO_METER - offset_y_m
+        labels.append({
+            "text": text.strip(),
+            "begCoordinate": {"x": x_m, "y": y_m},
+            "floorInd": 0,
+        })
+    return {"labelsData": labels}
 
 
 def summarize(payload: dict, perim_source: str) -> None:
@@ -199,25 +339,17 @@ def summarize(payload: dict, perim_source: str) -> None:
 def main():
     doc = ezdxf.readfile(str(DXF_PATH))
     msp = doc.modelspace()
-    payload, perim_source = build_payload(msp)
+    payload, perim_source, offset = build_payload(msp)
     summarize(payload, perim_source)
 
     OUTPUT_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"Full payload written to: {OUTPUT_PATH}")
-    print(f"  ({OUTPUT_PATH.stat().st_size:,} bytes)")
-    print()
-    print("To send via Tapir JSON API (when Archicad is running):")
-    print("  POST http://127.0.0.1:19723/")
-    print("  {")
-    print('    "command": "API.ExecuteAddOnCommand",')
-    print('    "parameters": {')
-    print('      "addOnCommandId": {')
-    print('        "commandNamespace": "TapirCommand",')
-    print('        "commandName": "CreateMeshes"')
-    print('      },')
-    print('      "addOnCommandParameters": <payload above>')
-    print('    }')
-    print("  }")
+    print(f"Mesh payload written to: {OUTPUT_PATH} ({OUTPUT_PATH.stat().st_size:,} bytes)")
+
+    labels_payload = build_labels_payload(msp, offset[0], offset[1])
+    LABELS_OUTPUT_PATH.write_text(json.dumps(labels_payload, indent=2), encoding="utf-8")
+    n = len(labels_payload["labelsData"])
+    sample = sorted({lbl["text"] for lbl in labels_payload["labelsData"]})[:8]
+    print(f"Labels payload written to: {LABELS_OUTPUT_PATH} ({n} labels, sample values {sample})")
 
 
 if __name__ == "__main__":
