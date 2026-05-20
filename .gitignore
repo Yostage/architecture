@@ -25,3 +25,6 @@ createmeshes_payload.json
 # OS junk
 Thumbs.db
 .DS_Store
+
+# Video frame/audio extracts (large binaries; transcript lives in sources/)
+video_out/

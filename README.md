@@ -27,6 +27,7 @@ Find high-leverage Archicad workflows to automate via AI / MCP integration, star
 - [[Source - YouTube Topography Mesh]] — Arch Guide tutorial summary (current manual process for topo)
 - [[Source - Lot 44 Survey DWG]] — probe of Shawn's example survey DWG (the "before" file)
 - [[Source - Pilot Inferred Parameters]] — what the pilot actually has to infer vs. read from the input (3 read, 11 inferred)
+- [[Source - Shawn Topo Difference Video]] — Shawn's 2026-05-20 explainer: drawing-set output needs topo LINES, not triangulation
 - [[Research - Archicad MCPs]] — survey of MCP servers and AI plugins for Archicad
 - [[Research - Tapir Command Reference]] — full inventory of Tapir JSON commands (~134, all 14 groups)
 - [[Research - Competitor BIM AI Integrations]] — how Archicad stacks up vs Revit / Rhino / Vectorworks
