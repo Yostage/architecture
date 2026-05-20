@@ -2,6 +2,23 @@
 
 Workspace for the **Archicad automation** project with Shawn Kemna (PBW Architects).
 
+## Running the topo pilot demo
+
+Pre-reqs (one-time): Python 3.12+, ODA File Converter, Archicad 29 with Tapir add-on installed, the DWG/DXF in place.
+
+```powershell
+py -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+For each demo run: open Archicad with a **fresh empty project**, then:
+
+```powershell
+.venv\Scripts\python.exe run_demo.py
+```
+
+That single script regenerates the `CreateMeshes` payload from the DXF, pings Tapir, POSTs the mesh, and fits the Archicad window to it. Hit **F3** for 3D, **O** for orbit. See [[Source - Lot 44 Survey DWG]] for the full pipeline writeup and [[Source - Pilot Inferred Parameters]] for the constants the pilot encodes.
+
 ## Goal
 Find high-leverage Archicad workflows to automate via AI / MCP integration, starting with discrete pilots that prove value before tackling broader process changes.
 
