@@ -1,0 +1,27 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated / transient
+dxf_out/
+snapshots/
+createmeshes_payload.json
+
+# Binary inputs (large, not source) - keep these out of git, store externally
+*.dwg
+*.dxf
+*.pln
+*.bpn
+*.pla
+*.apx
+*.lck
+
+# Obsidian local state
+.obsidian/
+
+# OS junk
+Thumbs.db
+.DS_Store
