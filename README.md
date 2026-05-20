@@ -11,13 +11,13 @@ py -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-For each demo run: open Archicad with a **fresh empty project**, then:
+**Demo workflow:** keep ONE configured demo project — set the **Mesh tool default** to "Show User-Defined Ridges" (Floor Plan and Section) + "All Ridges Smooth" (Model) with nothing selected, then **save the project**. Open it in Archicad (Tapir loaded), then:
 
 ```powershell
 .venv\Scripts\python.exe run_demo.py
 ```
 
-That single script regenerates the `CreateMeshes` payload from the DXF, pings Tapir, POSTs the mesh, and fits the Archicad window to it. Hit **F3** for 3D, **O** for orbit. See [[Source - Lot 44 Survey DWG]] for the full pipeline writeup and [[Source - Pilot Inferred Parameters]] for the constants the pilot encodes.
+The script regenerates the payload, deletes all existing meshes/labels, recreates the mesh, and fits the window. The recreated mesh **inherits the saved Mesh tool default**, so the plan shows clean contour lines (no triangulation) with no per-run toggling. Hit **F3** for 3D, **O** for orbit. See [[Source - Lot 44 Survey DWG]] for the full pipeline writeup, [[Source - Shawn Topo Difference Video]] for why the display default matters, and [[Source - Pilot Inferred Parameters]] for the constants the pilot encodes.
 
 ## Goal
 Find high-leverage Archicad workflows to automate via AI / MCP integration, starting with discrete pilots that prove value before tackling broader process changes.

@@ -10,9 +10,17 @@ Pre-reqs:
   - A project open (use a fresh empty one for a clean demo)
   - dxf_out/survey topo test.dxf present (produced from the DWG via ODA File Converter)
 
-Produces: a property-line mesh with contour level lines + 60 elevation labels.
-NOT automated (Tapir gap): the "Show User-Defined Ridges" display toggle that
-hides triangulation in plan — flip it manually in Mesh Settings for a clean view.
+Produces: a property-line mesh with contour level lines.
+
+Workflow: keep ONE configured demo project (Mesh tool DEFAULT set to "Show
+User-Defined Ridges" + "All Ridges Smooth", then saved). At runtime this script
+deletes all meshes/labels and recreates them, so the recreated mesh INHERITS the
+preserved display default and shows clean contour lines in plan — no per-run
+toggling needed. (Set the default with nothing selected: double-click the Mesh
+tool → Mesh Default Settings; the title must say "Default", not "Selection".)
+
+Contour elevation labels are not placed here — Tapir's CreateLabels can't bind a
+standalone text label (see Future Work.md).
 
 Run:
   .venv\\Scripts\\python.exe run_demo.py
@@ -49,7 +57,7 @@ def main():
     # See Future Work.md.
     step("Fit the most recently created mesh in window", "fit_latest_mesh.py")
     print("\nDone. Mesh placed (property-line perimeter + contour level lines).")
-    print("For the clean drawing-set plan, set the mesh to 'Show User-Defined Ridges'.")
+    print("Clean-contour plan display is inherited from the project's Mesh tool default.")
     print("Contour elevation labels are not auto-placed (Tapir gap — see Future Work).")
 
 

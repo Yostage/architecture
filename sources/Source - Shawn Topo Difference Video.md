@@ -33,11 +33,12 @@ The triangulated TIN (what we built after switching to single-point sublines in 
 3. **Does the 2D plan render clean contour lines?** 🟡 **Only after the manual toggle.** Out of the box, the created mesh's plan view showed **triangulation** (default = "Show All Ridges"). After manually switching to "User-Defined Ridges," it shows clean contour lines. So the geometry is right; the default display mode is wrong.
 4. **Editable nodes / single mesh?** ✅ Single mesh element, nodes editable (standard Archicad mesh behavior).
 
-## The remaining boundary: display setting is NOT scriptable via current Tapir
-- `GetDetailsOfElements` does **not** expose the ridge-display flag (readback is identical before/after the manual change).
+## The remaining boundary: display setting isn't *directly* scriptable — but inheritance solves it
+- `GetDetailsOfElements` does **not** expose the ridge-display flag (readback is identical before/after a manual change).
 - `CreateMeshes` schema has no display field; `SetDetailsOfElements` only takes floor/layer/drawIndex/typeSpecificDetails. Searched `ElementCommands.cpp` for "ridge"/"contour"/"showLines" → **zero matches.** Tapir doesn't wrap it.
-- The flag exists in Archicad's C++ `API_MeshType`, so it's a wrappable gap, not a hard limit.
-- **Likely no-code workaround (UNTESTED, tabled 2026-05-20):** element creation inherits the **Mesh tool default** settings. If the tool default — or a PBW **Favorite** applied via Tapir's `ApplyFavoritesToElementDefaults` — is set to "User-Defined Ridges," new meshes should be born with clean-contour display. Worth testing later. See [[Future Work]].
+- **Solved via tool-default inheritance (CONFIRMED working 2026-05-20).** New meshes inherit the **Mesh tool default** settings. Set the default once (Esc to deselect → double-click Mesh tool → Mesh *Default* Settings → Floor Plan and Section = "Show User-Defined Ridges", Model = "All Ridges Smooth"), **save the project**, and every Tapir-created mesh is born with clean-contour display. Verified: after setting the default and running the wipe-and-recreate, the plan showed clean contour lines (no triangulation). User confirmed "LGTM."
+- **Demo workflow that makes this work:** keep ONE configured project (with the mesh default set + saved); at runtime `run_demo.py` deletes all meshes/labels and recreates them, inheriting the preserved defaults. The display toggle never has to be touched per-run.
+- Gotcha: it must be the **tool DEFAULT** (nothing selected; dialog title says "Default"), not a selected mesh's setting — the latter dies when the element is deleted on recreate.
 
 ## Also flagged: contour elevation labels
 Frame 024 shows numbered contours (100, 102, … 110) + "property line." Shawn's narration only says "input the elevational information" (the Z heights, which we do), but a real site plan needs visible **contour labels**. Our pipeline discards the survey's `MTEXT` elevation labels (catalogued in [[Source - Lot 44 Survey DWG]]). Adding them is a data-we-already-have task — place via Tapir `CreateLabels` at each contour's MTEXT position. Confirm with Shawn whether he wants them auto-placed. See [[Future Work]].
