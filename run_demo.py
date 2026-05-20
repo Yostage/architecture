@@ -11,7 +11,7 @@ Pre-reqs:
   - dxf_out/survey topo test.dxf present (produced from the DWG via ODA File Converter)
 
 Run:
-  .venv\Scripts\python.exe run_demo.py
+  .venv\\Scripts\\python.exe run_demo.py
 """
 
 import subprocess
