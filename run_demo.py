@@ -34,15 +34,23 @@ def step(label: str, *args: str) -> None:
 
 
 def main():
-    step("Regenerate mesh + labels payloads", "dxf_to_createmeshes.py")
+    step("Regenerate payloads", "dxf_to_createmeshes.py")
     step("Ping Tapir", "send_to_tapir.py", "ping")
+    # Clear prior demo output so re-runs stay clean (idempotent). NOTE: this
+    # deletes ALL meshes/labels in the project — intended for the fresh/empty
+    # demo project, not a real working file.
+    step("Clear existing meshes", "send_to_tapir.py", "delete-meshes")
+    step("Clear existing labels", "send_to_tapir.py", "delete-labels")
     step("POST mesh", "send_to_tapir.py", "send-mesh")
-    step("POST elevation labels", "send_to_tapir.py", "send-labels")
-    # send-* print GUIDs in JSON; fit_latest_mesh re-fits to the most recent
-    # mesh, so we don't have to parse stdout.
+    # NOTE: contour-label placement is NOT run here. Tapir's CreateLabels can't
+    # bind a standalone text-label library part — it produces empty label shells
+    # with a stray leader to origin (verified 2026-05-20). The label code remains
+    # available via `send_to_tapir.py send-labels` for when that's fixed/extended.
+    # See Future Work.md.
     step("Fit the most recently created mesh in window", "fit_latest_mesh.py")
-    print("\nDone. Mesh + labels placed. Switch to 3D (F3), press O for orbit;")
-    print("for the clean drawing-set plan, set the mesh to 'Show User-Defined Ridges'.")
+    print("\nDone. Mesh placed (property-line perimeter + contour level lines).")
+    print("For the clean drawing-set plan, set the mesh to 'Show User-Defined Ridges'.")
+    print("Contour elevation labels are not auto-placed (Tapir gap — see Future Work).")
 
 
 if __name__ == "__main__":

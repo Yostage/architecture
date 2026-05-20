@@ -34,6 +34,13 @@ From [[Email - Archicad Bizniss]], in priority order per Shawn:
 1. **Interior Elevation setup** (his pick for "highest bang for buck"). Bonus: Shawn's example file already contains 4 Interior Elevation markers we noticed during `inspect_all` — that file is *also* a candidate demo for this pilot. Ground for the next probe.
 2. **Detail import / generation.** v1: pull standard details from a library. v2: parametrically generate details from wall/floor assembly inputs. The v2 ask is where AI value-add is highest; v1 is closer to template-fetching.
 
+## Contour elevation labels (blocked on a Tapir gap)
+The drawing-set output needs elevation numbers on each contour (frame 024). We extract them fine — the survey's `MTEXT` labels on `CONT-HGH`/`CONT-NML` give text + position, and `dxf_to_createmeshes.py` emits a `CreateLabels` payload (`send_to_tapir.py send-labels`). **But Tapir's `CreateLabels` can't place clean standalone text** (verified 2026-05-20): with only a `text` field it creates an empty label shell with **no library part bound** (null GUID, GDL params unreadable), so nothing renders except a stray leader line to the origin — "rays from origin," no visible numbers. Tried recreating after setting a no-leader label default; no change (the missing library-part binding is the root cause, not the leader). Paths forward:
+1. **Tapir extension / different command** — needs a way to bind a text-label library part (e.g. the "General Label" / text GDL) when creating, or a true `CreateText` command. Tapir has no `CreateText` today.
+2. **Tool-default + favorite** — possibly assign a working text-label favorite to the Label tool default first, then create; untested and may still not bind via the API.
+3. **Place as a different element** — e.g., draw the labels as text inside the DWG→DXF stage and import differently. Out of current scope.
+Until one of these, labels stay a **manual step** and are not run by `run_demo.py`.
+
 ## Demo polish
 Smaller things that would make the live demo crisper.
 
