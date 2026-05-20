@@ -13,12 +13,14 @@ Concrete questions to bring to the next conversation (copied from [[Source - Lot
 ## Tapir extensions — IMPLEMENTED 2026-05-20 (pending validation)
 All six gaps below were implemented on the fork (branch `tapir-backlog-commands`, pushed to github.com/Yostage/tapir-archicad-automation), compiling green. **Runtime validation deferred** — needs deploy + Archicad restart + `Test/test_examples.py`. See [[Source - Tapir Fork Build Setup]] for specifics.
 
-1. ✅ **`Set3DProjection`** — perspective camera (eye/target/viewCone/rollAngle) via `ACAPI_View_Change3DProjectionSets`. *(Verify: azimuth/distance derivation from camera→target; needs a 3D window.)*
-2. ✅ **`CreateView`** — save current window to the View Map (`ACAPI_Navigator_NewNavigatorView`). *(Verify: "save current window" semantics; root placement only — subfolder parent is a follow-up.)*
-3. ✅ **`OpenView`** — activate a saved view (GetNavigatorItem → `ACAPI_Database_ChangeCurrentDatabase`). Replaces the `ChangeWindow` limitation noted in `go_to_view.py`.
-4. ✅ **`CreateTexts`** — standalone Text elements; closes the contour-label gap (below).
-5. ✅ **`CreateMeshes` ridge fields** (`ridges`/`showLines`) — drawing-set display at creation; removes the tool-default-inheritance workaround once validated.
-6. ✅ **`SetModelViewOptions`** — apply a named MVO (`ACAPI_Navigator_ChangeViewOptions`).
+1. ✅ **`Set3DProjection`** — VALIDATED 2026-05-20 (perspective, from a 3D window).
+2. 🔧 **`CreateView`** — implemented but `NewNavigatorView` returns `0x8106006a`; WIP. **Next:** seed `sourceGuid`/`itemType` from the current Project-Map navigator item before the call. Lowest value (OpenView covers navigation). See [[Source - Tapir Fork Build Setup]].
+3. ✅ **`OpenView`** — VALIDATED 2026-05-20 (activated an existing view). Replaces the `ChangeWindow` limitation in `go_to_view.py`.
+4. ✅ **`CreateTexts`** — VALIDATED 2026-05-20; closes the contour-label gap (below).
+5. ✅ **`CreateMeshes` ridge fields** (`ridges`/`showLines`) — VALIDATED 2026-05-20; lets the pilot set the drawing-set display at creation instead of the tool-default trick.
+6. ✅ **`SetModelViewOptions`** — VALIDATED 2026-05-20 (applied a named MVO).
+
+**Two cleanups noted:** bump the global `ADDON_VERSION` (GetAddOnVersion still says 1.4.0 though commands are 1.4.2); and make the reload loop hands-off by suppressing the startup "load assets from library" modal (see [[Source - Tapir Fork Build Setup]]).
 
 ## Pilot productionization
 Turning the topo pilot from a working demo into a tool PBW can actually use.

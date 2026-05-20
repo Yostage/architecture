@@ -54,3 +54,16 @@ All registered in `AddOnMain.cpp` at version "1.4.2"; 6 example scripts in `Exam
 **v180 decision (recorded):** stay on v143. The AC29 DevKit `Definitions.hpp:147-151` hard-`#error`s unless `1930 ≤ _MSC_VER < 1950`; v180 (1950+) is blocked, no newer DevKit supports it, and v180 has ABI incompatibility with v143-built Archicad 29.
 
 **Validation deferred** (per the autonomous-build plan): deploy the `.apx` (UAC) + restart Archicad + run `Test/test_examples.py` to generate baselines + eyeball outputs. Riskiest to verify: CreateTexts (memo allocation) and Set3DProjection (perspective union/azimuth-distance derivation). See [[Future Work]].
+
+## Validation results (2026-05-20, against the deployed fork via Deploy-folder hot-load)
+Set up a user-writable `Deploy\` folder registered in Archicad's Add-On Manager (official Tapir removed from Program Files) so the fork loads without UAC. Confirmed the fork is live (the 5 new commands respond; `GetAddOnVersion` still reports 1.4.0 — a separate hardcoded constant I didn't bump; per-command versions are 1.4.2).
+
+**5 of 6 commands validated working:**
+- ✅ **CreateTexts** — created 3 Text elements (incl. multi-line), read back as type `Text`. The riskiest (memo) passed first try. **Closes the contour-label gap.**
+- ✅ **CreateMeshes** `ridges:"UserDefined"` + `showLines` — mesh created with the fields.
+- ✅ **Set3DProjection** — succeeded (perspective, from a 3D window).
+- ✅ **SetModelViewOptions** — applied the "01 Site" MVO.
+- ✅ **OpenView** — activated an existing "Site" view (`success:true`). Tested independently of CreateView.
+- ❌ **CreateView** — `ACAPI_Navigator_NewNavigatorView` returns `0x8106006a` even from a savable (Floor Plan / 3D) window. Fixed two masking bugs (set the nav item's `db` to current; relaxed the response schema so the real error surfaces) but the create still fails — the bare `API_NavigatorItem` needs more setup, almost certainly `sourceGuid`/`itemType` from the *current Project-Map navigator item*. **WIP / lowest value** (OpenView covers navigation). Next attempt: fetch the current Project-Map item and seed sourceGuid+itemType before NewNavigatorView.
+
+**Reload-loop caveat (important):** relaunching Archicad with `TestProject.pla` pops a modal **"load assets from library"** dialog that blocks the JSON API until dismissed — so the autonomous quit→relaunch→test loop is NOT fully hands-off for this project. Also: Archicad holds the `.apx` file lock briefly *after* the JSON API goes down, so the deploy-copy must retry until the lock releases (handled in the loop). To make the loop truly autonomous: pre-resolve/embed the library so launch doesn't prompt, or use a project that doesn't trigger the library dialog.
