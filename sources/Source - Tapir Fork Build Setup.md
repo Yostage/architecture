@@ -37,4 +37,20 @@ Output `.apx` → deploy by copying into `C:\Program Files\GRAPHISOFT\Archicad 2
 edit `Sources/*Commands.cpp` + register in `AddOnMain.cpp` → `cmake --build ... --config RelWithDebInfo` (incremental, fast) → copy `.apx` to Add-Ons → restart Archicad → test via our Python (`send_to_tapir.py`). Restart is the slow step (~30–60 s).
 
 ## Status
-Build environment is fully working. Next: write `CreateTexts` (the contour-labels gap — see [[Source - Shawn Topo Difference Video]] and [[Future Work]]) as the first real extension, since labels are the one remaining gap in the topo pilot.
+Build environment is fully working.
+
+## Backlog commands implemented (2026-05-20) — compiles green, validation pending
+Implemented all six backlog commands on a branch `tapir-backlog-commands`; the add-on compiles clean (fresh `.apx`, 2.74 MB) with all new code. Pushed to a private fork at **github.com/Yostage/tapir-archicad-automation**.
+
+1. **CreateTexts** — standalone Text elements (`API_TextID`), reusing the CreateLabels text-memo path. Closes the contour-label gap. (`ElementCreationCommands.cpp`)
+2. **CreateMeshes ridge fields** — added optional `ridges` (AllSharp/AllSmooth/UserDefined → `smoothRidges`) + `showLines`. Sets the drawing-set "user-defined ridges only" display at creation — removes the tool-default-inheritance dependency once validated.
+3. **Set3DProjection** — perspective camera via `ACAPI_View_Change3DProjectionSets`. (`ProjectionCommands.cpp`, new file — CMake `GLOB_RECURSE` auto-picks it up.)
+4. **CreateView** — save current window to View Map (`ACAPI_Navigator_NewNavigatorView`). (`NavigatorCommands.cpp`)
+5. **OpenView** — activate a saved view (GetNavigatorItem → `ACAPI_Database_ChangeCurrentDatabase`).
+6. **SetModelViewOptions** — apply a named MVO (`ACAPI_Navigator_ChangeViewOptions`).
+
+All registered in `AddOnMain.cpp` at version "1.4.2"; 6 example scripts in `Examples/`.
+
+**v180 decision (recorded):** stay on v143. The AC29 DevKit `Definitions.hpp:147-151` hard-`#error`s unless `1930 ≤ _MSC_VER < 1950`; v180 (1950+) is blocked, no newer DevKit supports it, and v180 has ABI incompatibility with v143-built Archicad 29.
+
+**Validation deferred** (per the autonomous-build plan): deploy the `.apx` (UAC) + restart Archicad + run `Test/test_examples.py` to generate baselines + eyeball outputs. Riskiest to verify: CreateTexts (memo allocation) and Set3DProjection (perspective union/azimuth-distance derivation). See [[Future Work]].

@@ -10,12 +10,15 @@ Concrete questions to bring to the next conversation (copied from [[Source - Lot
 3. Do PBW's surveyors **always store contour Z as a polyline attribute** (Foley Associates does), or does anyone deliver flat-Z polylines with elevation only in the `MTEXT` label?
 4. Is **centering to project origin** the right default, or do you keep raw survey coords?
 
-## Tapir extensions we'd want
-Gaps we found in the API that, if filled, would close the demo loop further. All are tractable C++ add-on extensions on top of the existing Tapir codebase (see [[Research - Tapir Command Reference]]).
+## Tapir extensions — IMPLEMENTED 2026-05-20 (pending validation)
+All six gaps below were implemented on the fork (branch `tapir-backlog-commands`, pushed to github.com/Yostage/tapir-archicad-automation), compiling green. **Runtime validation deferred** — needs deploy + Archicad restart + `Test/test_examples.py`. See [[Source - Tapir Fork Build Setup]] for specifics.
 
-1. **`Set3DProjection`** — set the live 3D camera's eye/target/view-cone/perspective-vs-parallel. Today there's `Set3DCutPlanes` and `FitInWindow` but no way to scripted-orient the camera. Underlying ACAPI exposes this; Tapir just hasn't wrapped it. *Hours of work.*
-2. **`CreateView`** — save the current window's state as a named entry in the View Map. Tapir creates Layouts/Subsets/Drawings/Details/Worksheets but not Views. Without this we can't auto-create demo viewpoints. *Hours of work.*
-3. **Saved-view activation via `ChangeWindow`** — current `ChangeWindow` only switches *window types*; it can't apply a saved View's settings (camera, layer combo, scale). Either extend `ChangeWindow` to accept a navigator-item ID, or add a sibling `OpenView` command. See `go_to_view.py` for the regression marker. *Hours of work.*
+1. ✅ **`Set3DProjection`** — perspective camera (eye/target/viewCone/rollAngle) via `ACAPI_View_Change3DProjectionSets`. *(Verify: azimuth/distance derivation from camera→target; needs a 3D window.)*
+2. ✅ **`CreateView`** — save current window to the View Map (`ACAPI_Navigator_NewNavigatorView`). *(Verify: "save current window" semantics; root placement only — subfolder parent is a follow-up.)*
+3. ✅ **`OpenView`** — activate a saved view (GetNavigatorItem → `ACAPI_Database_ChangeCurrentDatabase`). Replaces the `ChangeWindow` limitation noted in `go_to_view.py`.
+4. ✅ **`CreateTexts`** — standalone Text elements; closes the contour-label gap (below).
+5. ✅ **`CreateMeshes` ridge fields** (`ridges`/`showLines`) — drawing-set display at creation; removes the tool-default-inheritance workaround once validated.
+6. ✅ **`SetModelViewOptions`** — apply a named MVO (`ACAPI_Navigator_ChangeViewOptions`).
 
 ## Pilot productionization
 Turning the topo pilot from a working demo into a tool PBW can actually use.
@@ -34,12 +37,10 @@ From [[Email - Archicad Bizniss]], in priority order per Shawn:
 1. **Interior Elevation setup** (his pick for "highest bang for buck"). Bonus: Shawn's example file already contains 4 Interior Elevation markers we noticed during `inspect_all` — that file is *also* a candidate demo for this pilot. Ground for the next probe.
 2. **Detail import / generation.** v1: pull standard details from a library. v2: parametrically generate details from wall/floor assembly inputs. The v2 ask is where AI value-add is highest; v1 is closer to template-fetching.
 
-## Contour elevation labels (blocked on a Tapir gap)
-The drawing-set output needs elevation numbers on each contour (frame 024). We extract them fine — the survey's `MTEXT` labels on `CONT-HGH`/`CONT-NML` give text + position, and `dxf_to_createmeshes.py` emits a `CreateLabels` payload (`send_to_tapir.py send-labels`). **But Tapir's `CreateLabels` can't place clean standalone text** (verified 2026-05-20): with only a `text` field it creates an empty label shell with **no library part bound** (null GUID, GDL params unreadable), so nothing renders except a stray leader line to the origin — "rays from origin," no visible numbers. Tried recreating after setting a no-leader label default; no change (the missing library-part binding is the root cause, not the leader). Paths forward:
-1. **Tapir extension / different command** — needs a way to bind a text-label library part (e.g. the "General Label" / text GDL) when creating, or a true `CreateText` command. Tapir has no `CreateText` today.
-2. **Tool-default + favorite** — possibly assign a working text-label favorite to the Label tool default first, then create; untested and may still not bind via the API.
-3. **Place as a different element** — e.g., draw the labels as text inside the DWG→DXF stage and import differently. Out of current scope.
-Until one of these, labels stay a **manual step** and are not run by `run_demo.py`.
+## Contour elevation labels — addressed by CreateTexts (pending validation)
+The drawing-set output needs elevation numbers on each contour (frame 024). We extract them fine — the survey's `MTEXT` labels on `CONT-HGH`/`CONT-NML` give text + position, and `dxf_to_createmeshes.py` emits a payload. The original blocker: Tapir's `CreateLabels` couldn't place clean standalone text (empty label shell, no library part bound → "rays from origin," no visible numbers; the missing library-part binding was the root cause, not the leader).
+
+**Resolved by the new `CreateTexts` command** (2026-05-20, [[Source - Tapir Fork Build Setup]]): it creates standalone `API_TextID` Text elements with proper text-memo handling — no leader, no library-part dependency. Once the fork is deployed and validated, the pilot's label step switches from `CreateLabels` to `CreateTexts` (place a text at each contour's MTEXT position). Until validated, labels remain a manual step in the stock-Tapir pipeline.
 
 ## Demo polish
 Smaller things that would make the live demo crisper.
