@@ -30,6 +30,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.stdout.reconfigure(encoding="utf-8")
+
 HERE = Path(__file__).parent
 PY = sys.executable
 
@@ -45,20 +47,18 @@ def main():
     step("Regenerate payloads", "dxf_to_createmeshes.py")
     step("Ping Tapir", "send_to_tapir.py", "ping")
     # Clear prior demo output so re-runs stay clean (idempotent). NOTE: this
-    # deletes ALL meshes/labels in the project — intended for the fresh/empty
-    # demo project, not a real working file.
-    step("Clear existing meshes", "send_to_tapir.py", "delete-meshes")
-    step("Clear existing labels", "send_to_tapir.py", "delete-labels")
-    step("POST mesh", "send_to_tapir.py", "send-mesh")
-    # NOTE: contour-label placement is NOT run here. Tapir's CreateLabels can't
-    # bind a standalone text-label library part — it produces empty label shells
-    # with a stray leader to origin (verified 2026-05-20). The label code remains
-    # available via `send_to_tapir.py send-labels` for when that's fixed/extended.
-    # See Future Work.md.
+    # deletes ALL meshes/texts/labels in the project — intended for the demo
+    # project, not a real working file.
+    step("Clear existing meshes/texts/labels", "send_to_tapir.py", "clear")
+    step("POST mesh (ridges=UserDefined -> clean contour-line display)", "send_to_tapir.py", "send-mesh")
+    # Contour elevation labels via forked Tapir 1.4.2 CreateTexts (standalone
+    # Text elements — supersedes the old CreateLabels approach that couldn't
+    # place clean text). Requires the fork loaded; see Source - Tapir Fork Build Setup.
+    step("POST contour elevation labels (CreateTexts)", "send_to_tapir.py", "send-texts")
     step("Fit the most recently created mesh in window", "fit_latest_mesh.py")
-    print("\nDone. Mesh placed (property-line perimeter + contour level lines).")
-    print("Clean-contour plan display is inherited from the project's Mesh tool default.")
-    print("Contour elevation labels are not auto-placed (Tapir gap — see Future Work).")
+    print("\nDone. Mesh (property-line perimeter, user-defined ridges) + contour")
+    print("elevation labels placed — fully scripted, no manual tool-default step.")
+    print("Switch to plan for the drawing-set view; F3 for 3D, O to orbit.")
 
 
 if __name__ == "__main__":

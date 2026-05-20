@@ -28,7 +28,11 @@ CONTOUR_LAYERS = {"CONT-HGH", "CONT-NML"}
 # MTEXT elevation labels live on the same layers as the contour lines.
 CONTOUR_LABEL_LAYERS = {"CONT-HGH", "CONT-NML"}
 OUTPUT_PATH = Path(__file__).parent / "createmeshes_payload.json"
-LABELS_OUTPUT_PATH = Path(__file__).parent / "createlabels_payload.json"
+# Forked Tapir 1.4.2 CreateTexts payload (replaces the old CreateLabels approach,
+# which couldn't place clean standalone text).
+TEXTS_OUTPUT_PATH = Path(__file__).parent / "createtexts_payload.json"
+# Character height in mm for the contour elevation labels (tune to taste/scale).
+TEXT_HEIGHT_MM = 2.5
 
 # Archicad's JSON API always accepts coordinates in meters, regardless of the
 # project's display units. This survey is in feet, so every coordinate gets
@@ -286,16 +290,22 @@ def build_payload(msp) -> tuple[dict, str]:
                 "skirtType": "SolidBodyWithSkirt",
                 "skirtLevel": 100.0 * FOOT_TO_METER,
                 "floorIndex": 0,
+                # Forked Tapir 1.4.2: show only the contour level lines in plan,
+                # not the triangulation — the drawing-set display, set at creation
+                # (no more reliance on the Mesh tool default).
+                "ridges": "UserDefined",
+                "showLines": True,
             }
         ]
     }
     return payload, source, (offset_x, offset_y)
 
 
-def build_labels_payload(msp, offset_x_m: float, offset_y_m: float) -> dict:
-    """One text label per contour MTEXT, placed at its DWG position, sharing the
-    mesh's ft→m + centering transform so labels land on the contour lines."""
-    labels = []
+def build_texts_payload(msp, offset_x_m: float, offset_y_m: float) -> dict:
+    """One standalone Text per contour MTEXT, at its DWG position, sharing the
+    mesh's ft→m + centering transform so labels land on the contour lines.
+    Uses forked Tapir's CreateTexts (textsData)."""
+    texts = []
     for t in msp.query("MTEXT TEXT"):
         if t.dxf.layer not in CONTOUR_LABEL_LAYERS:
             continue
@@ -308,12 +318,12 @@ def build_labels_payload(msp, offset_x_m: float, offset_y_m: float) -> dict:
         ins = t.dxf.insert
         x_m = float(ins.x) * FOOT_TO_METER - offset_x_m
         y_m = float(ins.y) * FOOT_TO_METER - offset_y_m
-        labels.append({
+        texts.append({
+            "coordinate": {"x": x_m, "y": y_m, "z": 0.0},
             "text": text.strip(),
-            "begCoordinate": {"x": x_m, "y": y_m},
-            "floorInd": 0,
+            "height": TEXT_HEIGHT_MM,
         })
-    return {"labelsData": labels}
+    return {"textsData": texts}
 
 
 def summarize(payload: dict, perim_source: str) -> None:
@@ -345,11 +355,11 @@ def main():
     OUTPUT_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"Mesh payload written to: {OUTPUT_PATH} ({OUTPUT_PATH.stat().st_size:,} bytes)")
 
-    labels_payload = build_labels_payload(msp, offset[0], offset[1])
-    LABELS_OUTPUT_PATH.write_text(json.dumps(labels_payload, indent=2), encoding="utf-8")
-    n = len(labels_payload["labelsData"])
-    sample = sorted({lbl["text"] for lbl in labels_payload["labelsData"]})[:8]
-    print(f"Labels payload written to: {LABELS_OUTPUT_PATH} ({n} labels, sample values {sample})")
+    texts_payload = build_texts_payload(msp, offset[0], offset[1])
+    TEXTS_OUTPUT_PATH.write_text(json.dumps(texts_payload, indent=2), encoding="utf-8")
+    n = len(texts_payload["textsData"])
+    sample = sorted({t["text"] for t in texts_payload["textsData"]})[:8]
+    print(f"Texts payload written to: {TEXTS_OUTPUT_PATH} ({n} labels, sample values {sample})")
 
 
 if __name__ == "__main__":

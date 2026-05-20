@@ -16,7 +16,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 ENDPOINT = "http://127.0.0.1:19723/"
 PAYLOAD_PATH = Path(__file__).parent / "createmeshes_payload.json"
-LABELS_PATH = Path(__file__).parent / "createlabels_payload.json"
+TEXTS_PATH = Path(__file__).parent / "createtexts_payload.json"
 
 
 def call_tapir(command_name: str, params: dict | None = None) -> dict:
@@ -63,25 +63,24 @@ def send_mesh() -> int:
     return 0 if r.get("succeeded") else 1
 
 
-def send_labels() -> int:
-    payload = json.loads(LABELS_PATH.read_text(encoding="utf-8"))
-    print(f"POST {ENDPOINT}  command=TapirCommand.CreateLabels  ({len(payload['labelsData'])} labels)")
-    r = call_tapir("CreateLabels", payload)
+def send_texts() -> int:
+    payload = json.loads(TEXTS_PATH.read_text(encoding="utf-8"))
+    print(f"POST {ENDPOINT}  command=TapirCommand.CreateTexts  ({len(payload['textsData'])} texts)")
+    r = call_tapir("CreateTexts", payload)
     print(json.dumps(r, indent=2)[:2000])
     return 0 if r.get("succeeded") else 1
 
 
-def delete_labels() -> int:
-    r = call_tapir("GetElementsByType", {"elementType": "Label"})
+def _delete_by_type(element_type: str) -> int:
+    r = call_tapir("GetElementsByType", {"elementType": element_type})
     if not r.get("succeeded"):
         print(json.dumps(r, indent=2))
         return 1
     elements = r["result"]["addOnCommandResponse"].get("elements", [])
-    print(f"Deleting {len(elements)} label element(s)")
+    print(f"Deleting {len(elements)} {element_type} element(s)")
     if not elements:
         return 0
     r2 = call_tapir("DeleteElements", {"elements": elements})
-    print(json.dumps(r2, indent=2))
     return 0 if r2.get("succeeded") else 1
 
 
@@ -93,21 +92,19 @@ def fit(guid: str) -> int:
 
 
 def delete_meshes() -> int:
-    r = call_tapir("GetElementsByType", {"elementType": "Mesh"})
-    if not r.get("succeeded"):
-        print(json.dumps(r, indent=2))
-        return 1
-    elements = r["result"]["addOnCommandResponse"].get("elements", [])
-    print(f"Deleting {len(elements)} mesh element(s)")
-    if not elements:
-        return 0
-    r2 = call_tapir("DeleteElements", {"elements": elements})
-    print(json.dumps(r2, indent=2))
-    return 0 if r2.get("succeeded") else 1
+    return _delete_by_type("Mesh")
+
+
+def clear_all() -> int:
+    """Clear everything our pipeline creates: meshes, texts, and any legacy labels."""
+    rc = 0
+    for t in ("Mesh", "Text", "Label"):
+        rc |= _delete_by_type(t)
+    return rc
 
 
 def main():
-    cmds = ("ping", "send-mesh", "send-labels", "fit", "delete-meshes", "delete-labels")
+    cmds = ("ping", "send-mesh", "send-texts", "fit", "delete-meshes", "clear")
     if len(sys.argv) < 2 or sys.argv[1] not in cmds:
         print(__doc__)
         return 2
@@ -115,14 +112,14 @@ def main():
         return ping()
     if sys.argv[1] == "send-mesh":
         return send_mesh()
-    if sys.argv[1] == "send-labels":
-        return send_labels()
+    if sys.argv[1] == "send-texts":
+        return send_texts()
     if sys.argv[1] == "fit":
         return fit(sys.argv[2])
     if sys.argv[1] == "delete-meshes":
         return delete_meshes()
-    if sys.argv[1] == "delete-labels":
-        return delete_labels()
+    if sys.argv[1] == "clear":
+        return clear_all()
 
 
 if __name__ == "__main__":
