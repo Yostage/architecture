@@ -1,14 +1,18 @@
 """
 End-to-end topo pilot demo runner.
 
-Regenerates the CreateMeshes payload from the DXF, POSTs it to Tapir, then
-fits the Archicad window to the new mesh. Single command, no copy/paste.
+Regenerates the mesh + labels payloads from the DXF, POSTs both to Tapir, then
+fits the Archicad window to the mesh. Single command, no copy/paste.
 
 Pre-reqs:
   - Python venv with requirements.txt installed (.venv/Scripts/python.exe)
   - Archicad 29 running with the Tapir add-on, listening on 127.0.0.1:19723
   - A project open (use a fresh empty one for a clean demo)
   - dxf_out/survey topo test.dxf present (produced from the DWG via ODA File Converter)
+
+Produces: a property-line mesh with contour level lines + 60 elevation labels.
+NOT automated (Tapir gap): the "Show User-Defined Ridges" display toggle that
+hides triangulation in plan — flip it manually in Mesh Settings for a clean view.
 
 Run:
   .venv\\Scripts\\python.exe run_demo.py
@@ -30,13 +34,15 @@ def step(label: str, *args: str) -> None:
 
 
 def main():
-    step("Regenerate CreateMeshes payload", "dxf_to_createmeshes.py")
+    step("Regenerate mesh + labels payloads", "dxf_to_createmeshes.py")
     step("Ping Tapir", "send_to_tapir.py", "ping")
     step("POST mesh", "send_to_tapir.py", "send-mesh")
-    # send-mesh prints the GUID in JSON; the script below re-fits to whatever
-    # the most recent mesh in the project is, so we don't have to parse stdout.
+    step("POST elevation labels", "send_to_tapir.py", "send-labels")
+    # send-* print GUIDs in JSON; fit_latest_mesh re-fits to the most recent
+    # mesh, so we don't have to parse stdout.
     step("Fit the most recently created mesh in window", "fit_latest_mesh.py")
-    print("\nDone. Switch to 3D (F3), press O for orbit.")
+    print("\nDone. Mesh + labels placed. Switch to 3D (F3), press O for orbit;")
+    print("for the clean drawing-set plan, set the mesh to 'Show User-Defined Ridges'.")
 
 
 if __name__ == "__main__":
