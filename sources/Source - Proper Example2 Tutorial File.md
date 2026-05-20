@@ -30,3 +30,6 @@ Corrects / re-opens:
 - Net: this file *validates the target* and *confirms our method is the right shape*. It doesn't change that the remaining gaps are display + labels + the perimeter question.
 
 ("Salmon steak" = the visual: a clean rectangular mesh (the property boundary) with contour lines running through it like marbling. Matches the two rectangular teaching meshes Tapir found — no missing geometry.)
+
+## Is the salmon a crop of our Lot 44 DWG? No (geometrically confirmed 2026-05-20)
+Checked whether the salmon's 9 contours are a sub-region of `survey topo test.dwg`. Scraped the salmon contour geometry from the example mesh sublines (converted m→ft), translation-normalized, and matched against Lot 44's contours of equal point count. Best matches were **8–43 ft average vertex deviation** (a true crop would be sub-foot float noise), and error grew with line complexity — the signature of different curves, not the same line. The point-count multiset overlap was coincidence. **Conclusion: the salmon is a separate, hand-built teaching dataset; there is no salmon DWG in (or derivable from) our files.** (Caveat: tested translation + reversal, not rotation; deviations large enough that a rotated crop is unlikely.) For the pilot, Lot 44 remains our input; to reproduce the salmon specifically we'd scrape the example mesh sublines, not look for a DWG.
