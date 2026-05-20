@@ -26,6 +26,8 @@ Turning the topo pilot from a working demo into a tool PBW can actually use.
 4. **Generality test against a second surveyor's DWG.** Foley Associates stores contour Z on the polyline attribute (best case). Confirm the pilot works on at least one other firm's delivery before claiming it as "general."
 5. **OCR / label-matching variant** of the pilot for surveys with flat-Z polylines + `MTEXT` elevation labels. Probably needed for some surveyors. Spatial label-to-polyline matching is the core algorithm.
 
+6. **Polyline-subline mode as a fidelity option.** The pilot currently emits one subline per contour vertex (matches Shawn's free-TIN visual style). Earlier we tried one subline per polyline (preserving the surveyor's contour-line connectivity as constrained ridges in Archicad) — the resulting mesh had visible ridge bands following each contour, geometrically more faithful but visually sharper. Worth keeping as a `--ridges` flag for cases where surveyor-fidelity matters more than matching PBW's house style. The change is a one-function diff in `extract_contour_sublines`. See [[Source - Lot 44 Survey DWG]] for the verified-by-screenshot finding.
+
 ## Other Archicad pilots Shawn flagged
 From [[Email - Archicad Bizniss]], in priority order per Shawn:
 

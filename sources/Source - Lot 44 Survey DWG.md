@@ -111,6 +111,8 @@ This is the **best case** for automation:
 
 5. **`SolidBodyWithSkirt` + deep skirt (~30 m) is the natural-looking choice** for residential site topo, per Shawn's example.
 
+6. **Subline encoding: single-point-per-vertex matches Shawn's visual style, not polyline-per-contour.** When we first sent sublines as polylines (one subline per contour, with multiple coords), Archicad respected the polyline connectivity and treated each contour as a *constrained ridge*. The resulting mesh had visible ridge bands following each contour line — geometrically faithful to the survey, but visibly sharper than Shawn's example. After switching to single-point sublines (each contour vertex emitted as its own one-coord subline), Archicad does a free TIN through the point cloud and produces the smooth-graded pancake look that matches Shawn's mesh. Verified via side-by-side screenshots 2026-05-19. Both encodings produce 1185 elevation samples in our data; the difference is whether Archicad knows they're connected. See [[Future Work]] for the option to revisit if anyone wants the higher-fidelity rendering.
+
 ## Pilot architecture (final)
 
 ```

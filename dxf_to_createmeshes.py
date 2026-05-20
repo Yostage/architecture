@@ -49,20 +49,23 @@ def coord3d(x: float, y: float, z: float) -> dict:
 
 
 def extract_contour_sublines(msp, base_z_m: float) -> list[dict]:
-    """One subline per contour polyline; every vertex carries the polyline's Z
-    relative to base_z_m (Archicad expects coord Z values relative to `level`)."""
+    """ONE SUBLINE PER VERTEX. Matches Shawn's manual Magic-Wand workflow:
+    each contour vertex becomes an independent ridge point with no
+    connectivity to its neighbors. Archicad then triangulates a free TIN
+    through all points, giving the smooth-graded appearance of Shawn's
+    example mesh. (Earlier version preserved polyline connectivity, which
+    forced Archicad to honor each contour as a ridge and produced visibly
+    sharper terrain — geometrically more faithful but didn't visually
+    match Shawn's reference.)"""
     sublines = []
     for poly in msp.query("LWPOLYLINE"):
         if poly.dxf.layer not in CONTOUR_LAYERS:
             continue
         z_rel = float(poly.dxf.elevation) * FOOT_TO_METER - base_z_m
-        coords = [
-            coord3d(x * FOOT_TO_METER, y * FOOT_TO_METER, z_rel)
-            for x, y, *_ in poly.get_points()
-        ]
-        if len(coords) < 2:
-            continue
-        sublines.append({"coordinates": coords})
+        for x, y, *_ in poly.get_points():
+            sublines.append({
+                "coordinates": [coord3d(x * FOOT_TO_METER, y * FOOT_TO_METER, z_rel)]
+            })
     return sublines
 
 
