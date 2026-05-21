@@ -23,7 +23,7 @@ Shawn's `topo model example2` mesh is **his stuck state, not his goal.** The rea
 
 The triangulated TIN (what we built after switching to single-point sublines in commit `3b40bd3`) is explicitly the *wrong* output for production — it's only "ok for general design reference."
 
-## Why this *might* be tractable for us (hypothesis, not yet verified)
+## Why this *might* be tractable for us (hypothesis — since CONFIRMED; see Net status)
 - The clean-contour-line display likely comes from building the mesh with **contour polylines as user-defined ridges / level lines** — which is our *original* polyline-subline encoding (abandoned to match his TIN look). See [[Source - Lot 44 Survey DWG]] finding #6 and [[Future Work]] item on the `--ridges` flag. **Untested whether this alone reproduces frame 024.**
 - Shawn believes the geometry creation is impossible via automation: *"AI sucks at MAKING anything"* (today) and *"[Tapir] can't create plines, it can only place AC objects"* (May 11). We *have* shown `CreateMeshes` works and can carry level lines — so the *creation* half is further along than he thinks. That's encouraging, but it's not the same as having produced his drawing-ready output.
 
@@ -43,7 +43,12 @@ The triangulated TIN (what we built after switching to single-point sublines in 
 ## Also flagged: contour elevation labels
 Frame 024 shows numbered contours (100, 102, … 110) + "property line." Shawn's narration only says "input the elevational information" (the Z heights, which we do), but a real site plan needs visible **contour labels**. Our pipeline discards the survey's `MTEXT` elevation labels (catalogued in [[Source - Lot 44 Survey DWG]]). Adding them is a data-we-already-have task — place via Tapir `CreateLabels` at each contour's MTEXT position. Confirm with Shawn whether he wants them auto-placed. See [[Future Work]].
 
-## Net status
-We can **create** the correct drawing-ready geometry (level-line mesh) fully programmatically. The two remaining gaps to a turnkey drawing-set output are both **tabled, not solved**: (a) the ridge-display toggle isn't scriptable via current Tapir (workaround via tool-default inheritance is plausible but untested), and (b) contour labels aren't placed yet.
+## Net status — RESOLVED 2026-05-20/21 (was "tabled" when first written)
+The turnkey drawing-set output is now produced fully programmatically; both gaps that were open when this note was written are closed:
+- **Level-line geometry** — `dxf_to_createmeshes.py` defaults to `SUBLINE_MODE = "polyline"`, emitting connected sublines that Archicad stores as user-defined ridges (verified). This is the converter half of "show contour lines, not triangulation."
+- **(a) Ridge-display toggle** — solved two ways: Mesh **tool-default inheritance** (confirmed working), and the forked Tapir's `CreateMeshes` `ridges`/`showLines` fields, now baked into the payload (`"ridges": "UserDefined", "showLines": True`). This is the display half.
+- **(b) Contour labels** — the forked Tapir `CreateTexts` command places standalone Text at each contour's MTEXT position; wired into `run_demo.py` ("send-texts" step). `CreateLabels` couldn't do this (no library-part binding). See [[Source - Tapir Fork Build Setup]], [[Future Work]], [[Summary - Finishing the Pilot]].
+
+(Original "tabled, not solved" assessment preserved in git history; the contour-line look needs **both** the converter encoding *and* the display setting — neither alone reproduces frame 024.)
 
 (Frames + audio in `video_out/`, gitignored. This transcript is the durable artifact.)

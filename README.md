@@ -34,6 +34,7 @@ Find high-leverage Archicad workflows to automate via AI / MCP integration, star
 - [[Research - Tapir Command Reference]] — full inventory of Tapir JSON commands (~134, all 14 groups)
 - [[Research - Competitor BIM AI Integrations]] — how Archicad stacks up vs Revit / Rhino / Vectorworks
 - [[Synthesis - Automation Opportunities]] — pilot candidates ranked, with a recommended starting point
+- [[Summary - Finishing the Pilot]] — what it took to close the contour-label gap: Tapir fork build, the six commands, validation, cross-version CI, and upstreaming CreateTexts (PR #391)
 - [[Future Work]] — gaps, Tapir extensions to upstream, asks of Shawn, next pilots
 
 ## Stakeholders

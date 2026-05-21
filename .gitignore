@@ -8,7 +8,8 @@ __pycache__/
 # Generated / transient
 dxf_out/
 snapshots/
-createmeshes_payload.json
+*_payload.json
+*.7z
 
 # Binary inputs (large, not source) - keep these out of git, store externally
 *.dwg

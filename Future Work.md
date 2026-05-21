@@ -10,8 +10,8 @@ Concrete questions to bring to the next conversation (copied from [[Source - Lot
 3. Do PBW's surveyors **always store contour Z as a polyline attribute** (Foley Associates does), or does anyone deliver flat-Z polylines with elevation only in the `MTEXT` label?
 4. Is **centering to project origin** the right default, or do you keep raw survey coords?
 
-## Tapir extensions — IMPLEMENTED 2026-05-20 (pending validation)
-All six gaps below were implemented on the fork (branch `tapir-backlog-commands`, pushed to github.com/Yostage/tapir-archicad-automation), compiling green. **Runtime validation deferred** — needs deploy + Archicad restart + `Test/test_examples.py`. See [[Source - Tapir Fork Build Setup]] for specifics.
+## Tapir extensions — IMPLEMENTED + VALIDATED 2026-05-20; CreateTexts upstreamed 2026-05-21
+All six gaps below were implemented on the fork (branch `tapir-backlog-commands`, github.com/Yostage/tapir-archicad-automation). **5 of 6 validated working** against the deployed fork; CreateView is WIP (item 2). **CreateTexts — the pilot-critical one — is split into a clean upstream PR ([ENZYME-APD#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391)), green across the AC25–29 × Win+Mac matrix, marked ready for review.** The other four are queued as follow-up per-command PRs. See [[Source - Tapir Fork Build Setup]] and [[Summary - Finishing the Pilot]].
 
 1. ✅ **`Set3DProjection`** — VALIDATED 2026-05-20 (perspective, from a 3D window).
 2. 🔧 **`CreateView`** — implemented but `NewNavigatorView` returns `0x8106006a`; WIP. **Next:** seed `sourceGuid`/`itemType` from the current Project-Map navigator item before the call. Lowest value (OpenView covers navigation). See [[Source - Tapir Fork Build Setup]].
@@ -20,7 +20,7 @@ All six gaps below were implemented on the fork (branch `tapir-backlog-commands`
 5. ✅ **`CreateMeshes` ridge fields** (`ridges`/`showLines`) — VALIDATED 2026-05-20; lets the pilot set the drawing-set display at creation instead of the tool-default trick.
 6. ✅ **`SetModelViewOptions`** — VALIDATED 2026-05-20 (applied a named MVO).
 
-**Two cleanups noted:** bump the global `ADDON_VERSION` (GetAddOnVersion still says 1.4.0 though commands are 1.4.2); and make the reload loop hands-off by suppressing the startup "load assets from library" modal (see [[Source - Tapir Fork Build Setup]]).
+**Cleanups:** ✅ global `ADDON_VERSION` bumped to 1.4.2 (was 1.4.0 while the commands were already 1.4.2). ⬜ Still open: make the reload loop hands-off by suppressing the startup "load assets from library" modal (see [[Source - Tapir Fork Build Setup]]).
 
 ## Pilot productionization
 Turning the topo pilot from a working demo into a tool PBW can actually use.
@@ -31,7 +31,7 @@ Turning the topo pilot from a working demo into a tool PBW can actually use.
 4. **Generality test against a second surveyor's DWG.** Foley Associates stores contour Z on the polyline attribute (best case). Confirm the pilot works on at least one other firm's delivery before claiming it as "general."
 5. **OCR / label-matching variant** of the pilot for surveys with flat-Z polylines + `MTEXT` elevation labels. Probably needed for some surveyors. Spatial label-to-polyline matching is the core algorithm.
 
-6. **Polyline-subline mode as a fidelity option.** The pilot currently emits one subline per contour vertex (matches Shawn's free-TIN visual style). Earlier we tried one subline per polyline (preserving the surveyor's contour-line connectivity as constrained ridges in Archicad) — the resulting mesh had visible ridge bands following each contour, geometrically more faithful but visually sharper. Worth keeping as a `--ridges` flag for cases where surveyor-fidelity matters more than matching PBW's house style. The change is a one-function diff in `extract_contour_sublines`. See [[Source - Lot 44 Survey DWG]] for the verified-by-screenshot finding.
+6. **Subline encoding is a `SUBLINE_MODE` switch in `dxf_to_createmeshes.py`** (`extract_contour_sublines`). The pilot now defaults to **`"polyline"`** — one connected subline per contour, which Archicad stores as user-defined ridges / level lines; this is what produces the clean contour-line drawing-set output (paired with the ridge-display setting). The **`"points"`** mode (one subline per vertex → Archicad free-TINs a smooth surface, matching the example file's TIN look) remains as the alternative. We oscillated between them — commit `3b40bd3` switched to points to match Shawn's example before his video clarified that the smooth TIN was his *stuck state, not the goal*, so we switched back. Promote `SUBLINE_MODE` to a `--tin`/`--ridges` CLI flag if both outputs are wanted. See [[Source - Lot 44 Survey DWG]] and [[Summary - Finishing the Pilot]].
 
 ## Other Archicad pilots Shawn flagged
 From [[Email - Archicad Bizniss]], in priority order per Shawn:
@@ -39,10 +39,10 @@ From [[Email - Archicad Bizniss]], in priority order per Shawn:
 1. **Interior Elevation setup** (his pick for "highest bang for buck"). Bonus: Shawn's example file already contains 4 Interior Elevation markers we noticed during `inspect_all` — that file is *also* a candidate demo for this pilot. Ground for the next probe.
 2. **Detail import / generation.** v1: pull standard details from a library. v2: parametrically generate details from wall/floor assembly inputs. The v2 ask is where AI value-add is highest; v1 is closer to template-fetching.
 
-## Contour elevation labels — addressed by CreateTexts (pending validation)
+## Contour elevation labels — RESOLVED by CreateTexts (validated 2026-05-20, wired into run_demo)
 The drawing-set output needs elevation numbers on each contour (frame 024). We extract them fine — the survey's `MTEXT` labels on `CONT-HGH`/`CONT-NML` give text + position, and `dxf_to_createmeshes.py` emits a payload. The original blocker: Tapir's `CreateLabels` couldn't place clean standalone text (empty label shell, no library part bound → "rays from origin," no visible numbers; the missing library-part binding was the root cause, not the leader).
 
-**Resolved by the new `CreateTexts` command** (2026-05-20, [[Source - Tapir Fork Build Setup]]): it creates standalone `API_TextID` Text elements with proper text-memo handling — no leader, no library-part dependency. Once the fork is deployed and validated, the pilot's label step switches from `CreateLabels` to `CreateTexts` (place a text at each contour's MTEXT position). Until validated, labels remain a manual step in the stock-Tapir pipeline.
+**Resolved by the new `CreateTexts` command** (validated 2026-05-20, [[Source - Tapir Fork Build Setup]]): it creates standalone `API_TextID` Text elements with proper text-memo handling — no leader, no library-part dependency. The pilot's label step now uses `CreateTexts` (a text at each contour's MTEXT position), folded into the single `run_demo.py` flow (the "send-texts" step). `CreateTexts` is the command upstreamed as [ENZYME-APD#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391).
 
 ## Demo polish
 Smaller things that would make the live demo crisper.

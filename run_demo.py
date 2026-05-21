@@ -10,17 +10,20 @@ Pre-reqs:
   - A project open (use a fresh empty one for a clean demo)
   - dxf_out/survey topo test.dxf present (produced from the DWG via ODA File Converter)
 
-Produces: a property-line mesh with contour level lines.
+Produces: a property-line mesh with contour level lines + elevation labels.
 
-Workflow: keep ONE configured demo project (Mesh tool DEFAULT set to "Show
-User-Defined Ridges" + "All Ridges Smooth", then saved). At runtime this script
-deletes all meshes/labels and recreates them, so the recreated mesh INHERITS the
-preserved display default and shows clean contour lines in plan — no per-run
-toggling needed. (Set the default with nothing selected: double-click the Mesh
-tool → Mesh Default Settings; the title must say "Default", not "Selection".)
+Requires the forked Tapir 1.4.2 (D:\\code\\tapir-fork) loaded. Two fork features
+make this fully scripted, no manual Archicad steps:
+  - the mesh is created with `ridges=UserDefined` + `showLines`, so the plan
+    shows clean contour lines (not triangulation) without setting the Mesh tool
+    default by hand;
+  - contour elevation labels are placed as standalone Text via `CreateTexts`
+    (stock Tapir's `CreateLabels` can't bind a standalone label).
+See [[Source - Tapir Fork Build Setup]] and Future Work.md.
 
-Contour elevation labels are not placed here — Tapir's CreateLabels can't bind a
-standalone text label (see Future Work.md).
+(Stock-Tapir fallback if the fork isn't loaded: set the Mesh tool DEFAULT to
+"Show User-Defined Ridges" + "All Ridges Smooth" in a saved project so recreated
+meshes inherit the clean-contour display; labels can't be auto-placed.)
 
 Run:
   .venv\\Scripts\\python.exe run_demo.py

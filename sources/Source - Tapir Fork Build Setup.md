@@ -39,7 +39,7 @@ edit `Sources/*Commands.cpp` + register in `AddOnMain.cpp` → `cmake --build ..
 ## Status
 Build environment is fully working.
 
-## Backlog commands implemented (2026-05-20) — compiles green, validation pending
+## Backlog commands implemented (2026-05-20) — validated (results below)
 Implemented all six backlog commands on a branch `tapir-backlog-commands`; the add-on compiles clean (fresh `.apx`, 2.74 MB) with all new code. Pushed to a private fork at **github.com/Yostage/tapir-archicad-automation**.
 
 1. **CreateTexts** — standalone Text elements (`API_TextID`), reusing the CreateLabels text-memo path. Closes the contour-label gap. (`ElementCreationCommands.cpp`)
@@ -73,3 +73,13 @@ The fork's CI builds a **Mac × Windows × AC25–29 matrix** (inherited from up
 - **CreateTexts, the CreateMeshes ridge fields, and OpenView compile on all versions** unchanged — including the two pilot-critical ones.
 
 **Reload-loop caveat (important):** relaunching Archicad with `TestProject.pla` pops a modal **"load assets from library"** dialog that blocks the JSON API until dismissed — so the autonomous quit→relaunch→test loop is NOT fully hands-off for this project. Also: Archicad holds the `.apx` file lock briefly *after* the JSON API goes down, so the deploy-copy must retry until the lock releases (handled in the loop). To make the loop truly autonomous: pre-resolve/embed the library so launch doesn't prompt, or use a project that doesn't trigger the library dialog.
+
+## Upstreaming (2026-05-21)
+Started sending the working commands back to `ENZYME-APD/tapir-archicad-automation`. Upstream merges **one command per PR**, so the messy `tapir-backlog-commands` dev branch is split into clean per-command branches off `origin/main`.
+
+- **First PR up: `CreateTexts`** — [ENZYME-APD#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391), branch `feat/create-texts`, single `feat(texts):` commit (4 files, +175/−0). CreateView WIP and the personal `build_ac29.bat` are dropped from upstream; both stay on `tapir-backlog-commands`.
+- **Fork had to be deleted and re-forked** — `Yostage/tapir-archicad-automation` was a standalone repo, not a real GitHub fork, so cross-repo PRs were blocked until re-forked properly.
+- **Verified green on the full AC25–29 × Win+Mac matrix** by running CI in the fork (a push to a throwaway branch) — first-time-contributor PRs can't trigger upstream CI without a maintainer's approval click, so fork CI is how we self-verify. PR #391 is marked ready for review.
+- **Queued follow-up PRs:** CreateMeshes ridges/showLines, Set3DProjection (AC29-guarded), OpenView, SetModelViewOptions (AC29-guarded).
+
+The bump to global `ADDON_VERSION` (1.4.0 → 1.4.2) and `reload_and_test.py` were committed to the dev branch as separate dev tooling; the version bump resolves the `GetAddOnVersion` mismatch noted above.
