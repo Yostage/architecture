@@ -2,9 +2,11 @@
 
 Workspace for the **Archicad automation** project with Shawn Kemna (PBW Architects).
 
+> **New here / handed this repo?** Start with `CLAUDE.md` (orientation for an AI assistant), **[[Reference - Vocabulary Bridge]]** (architect ↔ software terms), and **[[Guide - Stock Tapir (No Fork)]]** if you don't have Scott's forked Tapir. Note: absolute paths in these docs (e.g. the fork location) are Scott-local and won't exist on another machine.
+
 ## Running the topo pilot demo
 
-Pre-reqs (one-time): Python 3.12+, ODA File Converter, Archicad 29 with the **forked Tapir** loaded (`D:\code\tapir-fork`; needed for the `ridges` mesh field + `CreateTexts` labels — see [[Source - Tapir Fork Build Setup]]), the DWG/DXF in place.
+Pre-reqs (one-time): Python 3.12+, ODA File Converter, Archicad 29 with Tapir loaded, the DWG/DXF in place. The fully-scripted run below needs the **forked Tapir** (for the `ridges` mesh field + `CreateTexts` labels — see [[Source - Tapir Fork Build Setup]]); without the fork, follow **[[Guide - Stock Tapir (No Fork)]]** instead. The fork lives wherever you built it — referenced in docs as `D:\code\tapir-fork` (Scott's checkout).
 
 ```powershell
 py -m venv .venv
@@ -12,9 +14,11 @@ py -m venv .venv
 .venv\Scripts\python.exe run_demo.py
 ```
 
+(Linux/macOS: use `python3 -m venv .venv` and `.venv/bin/python`.)
+
 `run_demo.py` regenerates the payloads, clears existing meshes/texts, POSTs the mesh (with `ridges=UserDefined` → clean contour lines, not triangulation) and the contour elevation labels (`CreateTexts`), then fits the window — fully scripted, no manual Archicad steps. Hit **F3** for 3D, **O** for orbit.
 
-*Stock-Tapir fallback (no fork): set the Mesh tool DEFAULT to "Show User-Defined Ridges" + "All Ridges Smooth" with nothing selected and save the project, so recreated meshes inherit the clean-contour display; labels can't be auto-placed.*
+*No fork? See **[[Guide - Stock Tapir (No Fork)]]** for the full degraded path (mesh works on stock Tapir; clean-contour display via the Mesh tool default; labels placed by hand).*
 
 Background: [[Summary - Finishing the Pilot]] (what it took), [[Source - Lot 44 Survey DWG]] (pipeline), [[Source - Shawn Topo Difference Video]] (why the display matters), [[Source - Pilot Inferred Parameters]] (encoded constants).
 
@@ -22,6 +26,9 @@ Background: [[Summary - Finishing the Pilot]] (what it took), [[Source - Lot 44 
 Find high-leverage Archicad workflows to automate via AI / MCP integration, starting with discrete pilots that prove value before tackling broader process changes.
 
 ## Index
+- `CLAUDE.md` — orientation for an AI assistant working in this repo (esp. Shawn's Claude)
+- [[Reference - Vocabulary Bridge]] — architect ↔ software/Tapir term translation table
+- [[Guide - Stock Tapir (No Fork)]] — run the pilot on public Tapir; what works and what degrades
 - [[Email - Archicad Bizniss]] — running thread with Shawn (Apr–May 2026)
 - [[Source - YouTube Topography Mesh]] — Arch Guide tutorial summary (current manual process for topo)
 - [[Source - Lot 44 Survey DWG]] — probe of Shawn's example survey DWG (the "before" file)

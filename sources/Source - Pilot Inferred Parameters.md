@@ -19,14 +19,14 @@ What the pilot *reads from the input* vs. *invents as a constant* — i.e. how m
 | Z lives on the polyline `elevation` attr | trusted | Some firms deliver flat-Z + label-only Z (needs OCR/matching). Foley does it right. |
 
 ## Inferred from Shawn's example (6) — change with PBW prefs / per-project
-| Constant | Value | Source |
-|---|---|---|
-| `skirtType` | `"SolidBodyWithSkirt"` | read from Shawn's mesh (2 other options exist) |
-| `skirtLevel` (depth) | 100 ft / 30.48 m | Shawn's ~30 m; purely cosmetic |
-| Perimeter strategy | concave hull of contour vertices | switched from PL layer after seeing his perimeter follows contour extent, not property line |
-| `HULL_RATIO` | 0.2 | Shapely concave_hull tuning; gave 54 vtx vs Shawn's 16, bbox matched |
-| Perimeter vertex Z | inherits contour Z (terrain-following) | matches Shawn; flat base Z also valid but makes a cliff |
-| `CENTER_TO_ORIGIN` | True | Shawn translated near (0,0); could keep raw coords |
+| Constant             | Value                                  | Source                                                                                      |
+| -------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `skirtType`          | `"SolidBodyWithSkirt"`                 | read from Shawn's mesh (2 other options exist)                                              |
+| `skirtLevel` (depth) | 100 ft / 30.48 m                       | Shawn's ~30 m; purely cosmetic                                                              |
+| Perimeter strategy   | concave hull of contour vertices       | switched from PL layer after seeing his perimeter follows contour extent, not property line |
+| `HULL_RATIO`         | 0.2                                    | Shapely concave_hull tuning; gave 54 vtx vs Shawn's 16, bbox matched                        |
+| Perimeter vertex Z   | inherits contour Z (terrain-following) | matches Shawn; flat base Z also valid but makes a cliff                                     |
+| `CENTER_TO_ORIGIN`   | True                                   | Shawn translated near (0,0); could keep raw coords                                          |
 
 ## Arbitrary defaults that happened to work (2)
 `floorIndex = 0` (ground floor, untested otherwise); ODA target `"ACAD2018"` (picked at random; modern DXF versions equivalent here).

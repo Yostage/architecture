@@ -73,6 +73,14 @@ CENTER_TO_ORIGIN = True
 #                through them → smooth triangulated look (Shawn's stuck state).
 SUBLINE_MODE = "polyline"
 
+# Stock-Tapir mode. The `ridges`/`showLines` mesh fields exist ONLY in Scott's
+# forked Tapir; public/stock Tapir doesn't understand them and may reject the
+# whole payload. Set True to omit those fields and emit a stock-compatible
+# payload — then get the clean contour-line display via the Mesh tool default
+# instead (see "Guide - Stock Tapir (No Fork).md"). Labels (CreateTexts) are
+# still fork-only and must be placed by hand on stock Tapir.
+STOCK_TAPIR = False
+
 
 def coord3d(x: float, y: float, z: float) -> dict:
     """Build a Coordinate3D dict. Inputs already in meters."""
@@ -281,23 +289,22 @@ def build_payload(msp) -> tuple[dict, str]:
         offset_x = offset_y = 0.0
         mesh_level = base_z_m
 
-    payload = {
-        "meshesData": [
-            {
-                "polygonCoordinates": perimeter,
-                "sublines": sublines,
-                "level": mesh_level,
-                "skirtType": "SolidBodyWithSkirt",
-                "skirtLevel": 100.0 * FOOT_TO_METER,
-                "floorIndex": 0,
-                # Forked Tapir 1.4.2: show only the contour level lines in plan,
-                # not the triangulation — the drawing-set display, set at creation
-                # (no more reliance on the Mesh tool default).
-                "ridges": "UserDefined",
-                "showLines": True,
-            }
-        ]
+    mesh_data = {
+        "polygonCoordinates": perimeter,
+        "sublines": sublines,
+        "level": mesh_level,
+        "skirtType": "SolidBodyWithSkirt",
+        "skirtLevel": 100.0 * FOOT_TO_METER,
+        "floorIndex": 0,
     }
+    if not STOCK_TAPIR:
+        # Forked Tapir 1.4.2: show only the contour level lines in plan, not the
+        # triangulation — the drawing-set display, set at creation (no reliance
+        # on the Mesh tool default). Omitted on stock Tapir (STOCK_TAPIR=True).
+        mesh_data["ridges"] = "UserDefined"
+        mesh_data["showLines"] = True
+
+    payload = {"meshesData": [mesh_data]}
     return payload, source, (offset_x, offset_y)
 
 

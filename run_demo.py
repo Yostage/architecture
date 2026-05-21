@@ -12,8 +12,9 @@ Pre-reqs:
 
 Produces: a property-line mesh with contour level lines + elevation labels.
 
-Requires the forked Tapir 1.4.2 (D:\\code\\tapir-fork) loaded. Two fork features
-make this fully scripted, no manual Archicad steps:
+Requires the forked Tapir 1.4.2 loaded (built wherever you checked it out;
+Scott's is at D:\\code\\tapir-fork). Two fork features make this fully scripted,
+no manual Archicad steps:
   - the mesh is created with `ridges=UserDefined` + `showLines`, so the plan
     shows clean contour lines (not triangulation) without setting the Mesh tool
     default by hand;
@@ -21,9 +22,10 @@ make this fully scripted, no manual Archicad steps:
     (stock Tapir's `CreateLabels` can't bind a standalone label).
 See [[Source - Tapir Fork Build Setup]] and Future Work.md.
 
-(Stock-Tapir fallback if the fork isn't loaded: set the Mesh tool DEFAULT to
-"Show User-Defined Ridges" + "All Ridges Smooth" in a saved project so recreated
-meshes inherit the clean-contour display; labels can't be auto-placed.)
+No fork? Don't run this script as-is — the send-texts step uses the fork-only
+CreateTexts and will error. Follow "Guide - Stock Tapir (No Fork).md": run the
+steps individually, strip the ridges/showLines fields, set the Mesh tool default
+for clean contours, and place labels by hand.
 
 Run:
   .venv\\Scripts\\python.exe run_demo.py
