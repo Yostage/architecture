@@ -29,4 +29,4 @@ The *information* is already in the survey:
 So a topo automation should: parse contour lines + their elevation labels → snap to the mesh → set Z per contour → leave perimeter alone. That's a one-shot script, not even an AI task. AI would shine if elevation has to be inferred from CAD layer naming, line color conventions, or PDF surveys.
 
 ## Link
-http://googleusercontent.com/youtube_content/1 *(original tracking link from message)*
+Original message link was a tracking redirect (dead). Find by title: "ArchiCAD Tutorial: Create Topography - The EASY way" (Arch Guide). Shawn's email also links a topo-process video: https://www.youtube.com/watch?v=1OprRjQEEiA

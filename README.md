@@ -4,20 +4,19 @@ Workspace for the **Archicad automation** project with Shawn Kemna (PBW Architec
 
 ## Running the topo pilot demo
 
-Pre-reqs (one-time): Python 3.12+, ODA File Converter, Archicad 29 with Tapir add-on installed, the DWG/DXF in place.
+Pre-reqs (one-time): Python 3.12+, ODA File Converter, Archicad 29 with the **forked Tapir** loaded (`D:\code\tapir-fork`; needed for the `ridges` mesh field + `CreateTexts` labels — see [[Source - Tapir Fork Build Setup]]), the DWG/DXF in place.
 
 ```powershell
 py -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-**Demo workflow:** keep ONE configured demo project — set the **Mesh tool default** to "Show User-Defined Ridges" (Floor Plan and Section) + "All Ridges Smooth" (Model) with nothing selected, then **save the project**. Open it in Archicad (Tapir loaded), then:
-
-```powershell
 .venv\Scripts\python.exe run_demo.py
 ```
 
-The script regenerates the payload, deletes all existing meshes/labels, recreates the mesh, and fits the window. The recreated mesh **inherits the saved Mesh tool default**, so the plan shows clean contour lines (no triangulation) with no per-run toggling. Hit **F3** for 3D, **O** for orbit. See [[Source - Lot 44 Survey DWG]] for the full pipeline writeup, [[Source - Shawn Topo Difference Video]] for why the display default matters, and [[Source - Pilot Inferred Parameters]] for the constants the pilot encodes.
+`run_demo.py` regenerates the payloads, clears existing meshes/texts, POSTs the mesh (with `ridges=UserDefined` → clean contour lines, not triangulation) and the contour elevation labels (`CreateTexts`), then fits the window — fully scripted, no manual Archicad steps. Hit **F3** for 3D, **O** for orbit.
+
+*Stock-Tapir fallback (no fork): set the Mesh tool DEFAULT to "Show User-Defined Ridges" + "All Ridges Smooth" with nothing selected and save the project, so recreated meshes inherit the clean-contour display; labels can't be auto-placed.*
+
+Background: [[Summary - Finishing the Pilot]] (what it took), [[Source - Lot 44 Survey DWG]] (pipeline), [[Source - Shawn Topo Difference Video]] (why the display matters), [[Source - Pilot Inferred Parameters]] (encoded constants).
 
 ## Goal
 Find high-leverage Archicad workflows to automate via AI / MCP integration, starting with discrete pilots that prove value before tackling broader process changes.

@@ -2,6 +2,8 @@
 
 Survey of what currently exists for wiring Claude (or any LLM agent) into Archicad. Done 2026-05-04.
 
+> **Update (2026-05-20):** The pilot drove Tapir directly over HTTP (`127.0.0.1:19723`), not via an MCP server, and we **forked Tapir** to add commands (the predicted "fork if we hit a ceiling" path) — see [[Source - Tapir Fork Build Setup]]. MCP wrapping is still future work ([[Future Work]]).
+
 ## TL;DR
 - Two community MCP servers exist; both rely on the **Tapir add-on** as the actual bridge into Archicad. Tapir is the load-bearing dependency, not the MCP wrapper.
 - **`SzamosiMate/tapir-archicad-MCP`** is the more substantial of the two — exposes 137 commands (Tapir + official JSON API merged) and ships local semantic search so the LLM can discover the right tool.

@@ -2,19 +2,10 @@
 
 Full inventory of JSON commands registered by the Tapir Archicad add-on. Pulled from [`AddOnMain.cpp`](https://github.com/ENZYME-APD/tapir-archicad-automation/blob/main/archicad-addon/Sources/AddOnMain.cpp) on 2026-05-18. These sit in the **`TapirCommand`** namespace and stack *on top of* Archicad's small official JSON API. Both community MCP servers ([[Research - Archicad MCPs]]) wrap these.
 
-**~134 Tapir commands across 14 groups.** Version column = the Tapir release that added the command — useful for spotting recently-added stuff.
+**~134 Tapir commands across 14 groups** (upstream `main`, 2026-05-18 snapshot). Version column = the release that added the command. **Our fork adds 6 more** (CreateTexts, CreateMeshes ridge fields, Set3DProjection, CreateView[WIP], OpenView, SetModelViewOptions) — see [[Source - Tapir Fork Build Setup]]; CreateTexts is upstreaming as PR #391.
 
-## Topo pilot — commands likely to matter
-The 3D-topo-from-survey pilot ([[Synthesis - Automation Opportunities]]) probably only needs a handful:
-- **`CreateMeshes`** — the actual mesh-element creator. Core of the pilot.
-- **`GetElementsByType`** / **`GetSelectedElements`** — find the imported 2D polylines.
-- **`GetDetailsOfElements`** — read polyline geometry / Z values.
-- **`DeleteElements`** — clean up the source 2D lines after mesh is built.
-- **`HighlightElements`** — visual feedback while debugging.
-- **`CreateLayers`** / **`GetAttributesByType`** — manage the mesh's layer.
-- **`FitInWindow`** — center the view on the new mesh for the user.
-
-Reading the source DWG happens *outside* Archicad (Python + ezdxf). Tapir's surface starts after polylines exist inside the project.
+## Topo pilot — commands that matter
+The pilot uses **`CreateMeshes`** (the mesh) + the fork's **`CreateTexts`** (contour labels), POSTed in one `run_demo.py` pass with `DeleteElements` to clear prior output and `FitInWindow` to frame it. Reading the DWG happens *outside* Archicad (Python + ezdxf); Tapir's surface starts after the payload is built.
 
 ---
 
@@ -240,11 +231,9 @@ Reading the source DWG happens *outside* Archicad (Python + ezdxf). Tapir's surf
 ---
 
 ## Observations
-
-- **Tapir 1.4.0 was a big bang** — most `Create*` and all `Modify*` element commands landed in one release. The add-on grew from "read + tweak" into "create geometry from scratch."
-- **Coverage is asymmetric.** Reading is broad (geometry, properties, classifications, GDL params, attachments). Writing is targeted to specific element types — there's no generic "create element from spec." For meshes specifically, `CreateMeshes` exists and is what the topo pilot needs.
-- **No DWG/PDF import command.** Bringing the 2D survey lines *into* Archicad still has to happen the manual way (or via Archicad's own File > Open / Merge), unless we use `IFCFileOperation` and a DWG→IFC pre-step. Probably easiest: pre-convert DWG outside Archicad → emit polylines directly via `CreateMeshes` parameters.
-- **`CreateMeshes` is the load-bearing command for the pilot.** Schema verified 2026-05-19 — see below.
+- **Tapir 1.4.0 was a big bang** — most `Create*` and all `Modify*` landed at once; the add-on grew from "read + tweak" to "create geometry."
+- **Coverage is asymmetric:** reading is broad; writing is per-element-type (no generic "create from spec"). `CreateMeshes` is the load-bearing command for the topo pilot.
+- **No DWG/PDF import command** — bringing 2D survey lines *into* Archicad stays manual (or DWG→IFC + `IFCFileOperation`). Easiest: pre-convert outside Archicad and emit geometry directly via `CreateMeshes`.
 
 ## CreateMeshes — input schema (read from source 2026-05-19)
 
@@ -268,15 +257,7 @@ Reading the source DWG happens *outside* Archicad (Python + ezdxf). Tapir's surf
 }
 ```
 
-**Why this is the perfect shape for the topo pilot:**
-- The contour polylines from the DWG map **directly** to `sublines` — each contour becomes one subline, with each vertex carrying the contour's Z.
-- The mesh perimeter (the YouTube tutorial's "don't flatten the edge" footgun) is **separately specified** as `polygonCoordinates` — Tapir's API enforces the distinction the manual workflow has to police by hand.
-- One JSON, one call, one mesh. No state machine, no per-node elevation loop.
-
-**Pilot architecture (one-shot):**
-1. Parse DWG → list of `(polyline_xy_points, elevation)` from CONT-HGH + CONT-NML.
-2. Compute or accept a perimeter polygon (open question — see [[Source - Lot 44 Survey DWG]]).
-3. Emit one `CreateMeshes` call with sublines = contours, polygonCoordinates = perimeter.
+Perfect shape for the pilot: contours map directly to `sublines`; the perimeter is specified separately as `polygonCoordinates` (the API enforces the "don't flatten the edge" distinction the manual workflow polices by hand); one JSON, one call, no per-node loop. (Subline encoding `"polyline"` vs `"points"` controls the level-line-vs-TIN look — see [[Source - Lot 44 Survey DWG]] #6.)
 
 ## Sources
 - [Tapir add-on docs landing page](https://enzyme-apd.github.io/tapir-archicad-automation/archicad-addon/) *(intro only; live command list comes from source)*

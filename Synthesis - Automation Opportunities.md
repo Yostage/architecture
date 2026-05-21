@@ -2,19 +2,15 @@
 
 Synthesis of [[Email - Archicad Bizniss]], [[Source - YouTube Topography Mesh]], and [[Research - Archicad MCPs]]. Goal: answer Shawn's open question — "discrete topo pilot OR higher-level map of possibilities?" The honest answer is **both, in that order**.
 
+> **Outcome (2026-05-21):** Track A (topo pilot) shipped end-to-end — see [[Summary - Finishing the Pilot]]. We did hit the predicted Tapir ceiling and forked it. Tracks B (interior elevations) and C (details) not yet started.
+
 ## Big picture
 The leverage isn't "Archicad has AI." It's **"Archicad has a scriptable JSON API (via Tapir) that an LLM can drive."** Once that bridge is up, every workflow Shawn listed reduces to: *can the LLM combine the right Tapir commands?* That reframes the question from "what can AI do" to "which manual workflows are bottlenecked on rote command-chaining."
 
-## Three tiers of automation we can offer
-
-### Tier 1 — Deterministic macros (no AI needed)
-Workflows where the inputs are structured and the output is mechanical. AI is overkill; a Python script over the Tapir API gets it done and is maintainable. **Topo mesh fits here.** The video confirms the manual process is just: trace each contour, type its elevation, don't touch the perimeter. All of that is deterministic if we can read elevations off the survey.
-
-### Tier 2 — LLM-assisted workflows
-Workflows where inputs are messy or judgment is required, but the operations themselves are well-defined. **Interior elevations fit here.** Naming follows a pattern (`ROOM NAME <Orientation>`) but the LLM has to know which rooms are which, what counts as "interior," and the right scale per project. View/sheet navigation is rote once the LLM knows the targets.
-
-### Tier 3 — Knowledge-augmented generation
-Workflows where the firm has tacit standards. **Detail generation fits here.** The v2 ask (generate a wall-assembly detail from parameters) is genuinely an AI problem — needs a library of past details + LLM reasoning to compose new ones.
+## Three tiers of automation
+- **Tier 1 — deterministic macros (no AI):** structured input, mechanical output; a Python script over Tapir suffices. **Topo mesh** — trace contours, type elevations, don't touch the perimeter; all deterministic if we read elevations off the survey.
+- **Tier 2 — LLM-assisted:** messy input / judgment, but well-defined operations. **Interior elevations** — naming follows `ROOM NAME <Orientation>`, but the LLM must know which rooms are interior + the right per-project scale; nav is rote once targets are known.
+- **Tier 3 — knowledge-augmented generation:** tacit firm standards. **Detail generation** v2 (compose a wall-assembly detail from parameters) is a real AI problem — needs a corpus of past details.
 
 ## Mapping Shawn's three candidates
 
