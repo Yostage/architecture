@@ -36,6 +36,7 @@ Find high-leverage Archicad workflows to automate via AI / MCP integration, star
 - [[Source - Shawn Topo Difference Video]] — Shawn's 2026-05-20 explainer: drawing-set output needs topo LINES, not triangulation
 - [[Source - Proper Example2 Tutorial File]] — the real .pln: a 3-step tutorial; step 3 = definitive target (clean contour lines + labels, property-line perimeter)
 - [[Source - Tapir Fork Build Setup]] — local build of the Tapir add-on works (toolchain, gotchas, build commands, iteration loop)
+- [[Notes - Tapir Upstreaming]] — active state of upstreaming the six fork commands to ENZYME-APD: PR-by-PR status, conventions, maintainer review patterns, per-command lessons
 - [[Research - Archicad MCPs]] — survey of MCP servers and AI plugins for Archicad
 - [[Research - Tapir Command Reference]] — full inventory of Tapir JSON commands (~134, all 14 groups)
 - [[Research - Competitor BIM AI Integrations]] — how Archicad stacks up vs Revit / Rhino / Vectorworks

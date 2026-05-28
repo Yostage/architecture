@@ -56,3 +56,6 @@ One command per PR (upstream convention) → clean per-command branches off `ori
 - **Verified green on the full AC25–29 × Win+Mac matrix** by running CI in the fork (first-time-contributor PRs can't trigger upstream CI without maintainer approval). PR marked ready for review.
 - **Queued:** CreateMeshes ridges, Set3DProjection (AC29-guarded), OpenView, SetModelViewOptions (AC29-guarded).
 - Global `ADDON_VERSION` bumped 1.4.0 → 1.4.2 (was lagging the per-command versions), committed to the dev branch with `reload_and_test.py`.
+
+## Upstreaming status, conventions, review patterns
+See **[[Notes - Tapir Upstreaming]]** for the current PR-by-PR status, the inferred upstream conventions (one-per-PR, draft-first, fork-side CI iteration), the maintainer's review patterns (no duplicated blocks, no `static_cast` to API types, match the nearest sibling command), and per-command lessons learned. This file (Source -) is just the local build/deploy mechanics; that file (Notes -) is the active state of the upstreaming initiative.
