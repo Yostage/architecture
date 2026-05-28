@@ -29,13 +29,15 @@ The fork inherited upstream's **Mac × Win × AC25–29** matrix; with only the 
 ## 6. Wire into the pilot
 Label step switched from `CreateLabels` to `CreateTexts` (a Text at each contour's MTEXT position), folded into `run_demo.py` ("send-texts"). The contour-line **look** needs two halves: the converter's `SUBLINE_MODE="polyline"` encoding (level-line geometry) **and** the ridge-display setting (`ridges=UserDefined`, now in the payload) — neither alone reproduces frame 024. Pilot is now complete end-to-end.
 
-## 7. Upstream the key piece (2026-05-21)
+## 7. Upstream the key piece (2026-05-21 → 2026-05-27)
 Upstream merges one command per PR, so the messy dev branch is split into clean per-command branches off `origin/main`.
-- **PR #391** — `feat(texts): add CreateTexts` — https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391 — one commit (4 files, +175/−0), no other-command contamination; CreateView WIP and `build_ac29.bat` dropped. Ready for review.
+- **PR #391** — `feat(texts): add CreateTexts` — https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391 — **MERGED 2026-05-27** after a review pass that extracted `ParseJustificationString` and `SetTextContentAndParagraphs` helpers shared with `CreateLabels`. Lesson recorded for future PRs: pre-flight sibling-grep for duplicated logic before opening.
+- **PR #394** — `feat(navigator): add OpenView` — https://github.com/ENZYME-APD/tapir-archicad-automation/pull/394 — opened as draft 2026-05-27, awaiting maintainer CI approval. Uses `ACAPI_View_GoToView` (AC27+, version-guarded) and validates navigator item type to reject containers; the backlog's original `ChangeCurrentDatabase` approach was a false start that switched the logical database without reactivating the UI window.
+- **PR #395** — `feat(meshes): add line-display fields to CreateMeshes` — https://github.com/ENZYME-APD/tapir-archicad-automation/pull/395 — opened as draft 2026-05-27. Scope-expanded from the 2-field backlog scope (`ridges`+`showLines`) to a coherent 5-field "line display" bundle (added `contourPen`, `levelPen`, `lineTypeIndex`). Pen/lineType conventions match the existing `CreatePolyLines` precedent. Visually verified with the screenshot skill (magenta-styled mesh vs faint default). **This is the pilot-critical PR** — once merged + shipped, `run_demo.py` runs end-to-end on stock Tapir.
 - The Yostage repo had to be **deleted and re-forked** (it was a standalone repo, not a real fork → cross-repo PRs blocked).
-- **Verified green on the full AC25–29 × Win+Mac matrix** by running CI in the fork (first-time-contributor PRs can't trigger upstream CI without a maintainer's approval click).
+- **Verified green on the full AC25–29 × Win+Mac matrix** by running CI in the fork on a throwaway `ci/<name>-check` branch first (first-time-contributor PRs can't trigger upstream CI without a maintainer's approval click, and the throwaway loop keeps the maintainer from ever seeing red runs).
 
 ## What remains
 - **Pilot productionization** ([[Future Work]]): config layer for the 11 baked-in params, surveyor-conventions + units auto-detect, second-DWG generality test, MCP/slash-command wiring. None block the demo.
-- **Upstream:** four more per-command PRs queued (CreateMeshes ridges, Set3DProjection, OpenView, SetModelViewOptions); CreateView stays WIP.
+- **Upstream:** two non-pilot PRs queued (Set3DProjection, SetModelViewOptions); CreateView stays WIP. Once #394 and #395 ship in a Tapir release (realistic: late June / early July 2026 based on the ~20-30-day release cadence), the demo runs on stock Tapir with zero workarounds.
 - **Ask Shawn:** perimeter convention, skirt default, Z-storage, centering ([[Future Work]]).

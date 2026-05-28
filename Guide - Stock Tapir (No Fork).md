@@ -2,9 +2,15 @@
 
 How to run the topo pilot on **public/stock Tapir**, without Scott's forked build. This is the expected path for Shawn. The geometry still works end-to-end; two display niceties become manual.
 
+> **Heads-up (2026-05-27):** Both pilot-blocking gaps are now upstreamed.
+> - `CreateTexts` — merged (ENZYME-APD#391). Closes the labels-by-hand workaround in §2 below.
+> - `CreateMeshes` `ridges` / `showLines` — draft PR (ENZYME-APD#395), fork-CI green, awaiting review. Closes the Mesh-tool-default trick in §1 below.
+>
+> Once both are in a Tapir release, **the entire `run_demo.py` pipeline runs on stock Tapir with no workarounds** — this guide becomes a historical artifact. Realistic timing: **late June / early July 2026** (Tapir's release cadence averages 20-30 days; latest release 1.4.0 was 2026-05-12). Until shipped, this guide still applies as-written.
+
 ## What needs the fork (and what doesn't)
 
-`CreateMeshes` itself is **stock** (Tapir 1.1.9+), so the core pilot — building the terrain mesh from the survey — works without the fork. Only these are fork-only:
+`CreateMeshes` itself is **stock** (Tapir 1.1.9+), so the core pilot — building the terrain mesh from the survey — works without the fork. Only these are fork-only on the current stock release:
 
 | Step / feature | Command | Stock? |
 |---|---|---|

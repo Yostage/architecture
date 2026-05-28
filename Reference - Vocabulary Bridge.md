@@ -11,8 +11,8 @@ A translation table between **how Shawn (architect) talks** and **how this repo 
 | The "smooth blob" / triangulated look (what Shawn does *not* want on sheets) | **free-TIN**; `SUBLINE_MODE = "points"` | Archicad triangulating between points and showing the facets — wrong for documentation |
 | Property line, lot boundary | **PL layer**; `polygonCoordinates` (the perimeter) | The outline polygon of the mesh; pilot walks the survey's `PL` layer into a closed loop |
 | The skirt / vertical sides of the topo | **skirt**; `skirtType = "SolidBodyWithSkirt"`, `skirtLevel` | The walls dropped from the mesh edge down to a base level |
-| Elevation labels / spot elevations on contours | **texts**; `CreateTexts` (**fork only**) | Standalone text placed at each contour's elevation value |
-| "Show user-defined ridges" / "all ridges smooth" (Mesh tool settings) | `ridges` / `showLines` payload fields (**fork only**), or the **Mesh tool default** trick | The display setting that produces clean contour lines instead of triangulation |
+| Elevation labels / spot elevations on contours | **texts**; `CreateTexts` (merged upstream as ENZYME-APD#391, not yet in a stock release — treat as fork-only until a Tapir release ships it) | Standalone text placed at each contour's elevation value |
+| "Show user-defined ridges" / "all ridges smooth" (Mesh tool settings) | `ridges` / `showLines` payload fields (draft PR ENZYME-APD#395, not yet in a stock release — treat as fork-only until shipped), or the **Mesh tool default** trick | The display setting that produces clean contour lines instead of triangulation |
 | Survey file from the surveyor | **DWG / DXF**; read with `ezdxf` | The "before" file; pipeline converts DWG→DXF (ODA File Converter) then reads DXF |
 | — (no common architect term) | **payload** | The JSON document sent to Archicad describing what to create |
 | — | **concave hull** (`shapely`) | A fallback way to derive a perimeter from the contour points if there's no property line |
@@ -22,7 +22,7 @@ A translation table between **how Shawn (architect) talks** and **how this repo 
 | Term | What it is |
 |---|---|
 | **Tapir** | The Archicad add-on that exposes ~134 JSON commands on top of Archicad's small official API. Everything here talks to it. See [[Research - Tapir Command Reference]]. |
-| **The fork** | Scott's custom build of Tapir adding 6 commands/fields (see CLAUDE.md). **Assume Shawn doesn't have it.** Stock Tapir = the public release. |
+| **The fork** | Scott's custom build of Tapir originally adding 6 commands/fields; 3 are now upstreamed (`CreateTexts` merged, `OpenView` + `CreateMeshes` `ridges`/`showLines` as draft PRs), 3 still fork-only — see CLAUDE.md. **Assume Shawn doesn't have any of them yet** (the upstreamed three still need to ship in a Tapir release). Stock Tapir = the public release. |
 | **MCP** | The bridge that lets Claude call Tapir commands directly. |
 | **Stock / degraded path** | Running the pilot on public Tapir without the fork — see [[Guide - Stock Tapir (No Fork)]]. |
 | **Endpoint `127.0.0.1:19723`** | The local socket Tapir listens on; the scripts POST here. |
@@ -39,4 +39,4 @@ A translation table between **how Shawn (architect) talks** and **how this repo 
 
 ## When in doubt
 
-If Shawn names something not in this table, check [[Research - Tapir Command Reference]] for the matching command, and confirm it's not one of the six fork-only items before suggesting it.
+If Shawn names something not in this table, check [[Research - Tapir Command Reference]] for the matching command, and confirm it's not one of the fork-dependent items (see CLAUDE.md for the current list — 4 still fork-only, 2 upstreamed but not yet in a Tapir release) before suggesting it.

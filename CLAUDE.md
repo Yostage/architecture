@@ -10,11 +10,11 @@ This repo is a working vault for an **Archicad automation** project. If you're r
 
 ## Default assumption: NO fork
 
-The pilot was built against a **forked Tapir** that Scott compiled locally. **Assume Shawn does *not* have that fork** — he's running **stock Tapir**. This matters because six commands/fields exist *only* in the fork and will fail on a stock install:
+The pilot was built against a **forked Tapir** that Scott compiled locally. **Assume Shawn does *not* have that fork** — he's running **stock Tapir**. The fork originally added six commands/fields beyond stock; **three have since been upstreamed** (`CreateTexts` merged as ENZYME-APD#391; `OpenView` open as draft #394; `CreateMeshes` `ridges`/`showLines` open as draft #395). The remaining **three** still exist only in the fork and will fail on a stock install:
 
-> `CreateTexts`, the `ridges`/`showLines` fields on `CreateMeshes`, `Set3DProjection`, `CreateView`, `OpenView`, `SetModelViewOptions`.
+> `Set3DProjection`, `CreateView`, `SetModelViewOptions`.
 
-Do **not** steer Shawn toward those as if they're available. If one would help, flag it explicitly as *"requires Scott's forked Tapir."* For how to run the pilot on stock Tapir — and what degrades — follow **[[Guide - Stock Tapir (No Fork)]]**. That is the primary path for Shawn.
+Do **not** steer Shawn toward those as if they're available. If one would help, flag it explicitly as *"requires Scott's forked Tapir."* For the three upstreamed ones, they only reach Shawn once Tapir cuts a release that includes them — until then, treat as fork-only too. (Tapir's release cadence is irregular but averages ~20-30 days; latest was 1.4.0 on 2026-05-12. Realistic expectation for the upstreamed commands to land in a stock release: **late June / early July 2026**, assuming the two drafts move.) For how to run the pilot on stock Tapir — and what degrades — follow **[[Guide - Stock Tapir (No Fork)]]**. That is the primary path for Shawn.
 
 ## Environment notes
 

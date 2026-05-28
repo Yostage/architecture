@@ -9,9 +9,12 @@ Gaps, deferred improvements, and extensions from the topo pilot build (2026-05-1
 4. Is **centering to project origin** the right default, or keep raw survey coords?
 
 ## Tapir extensions — DONE (status; detail in [[Source - Tapir Fork Build Setup]])
-All six implemented on the fork; **5/6 validated**, CreateTexts upstreaming as [ENZYME-APD#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391). Remaining forward work:
-- 🔧 **`CreateView`** — `NewNavigatorView` returns `0x8106006a`; WIP, lowest value (OpenView covers navigation). **Next:** seed `sourceGuid`/`itemType` from the current Project-Map item before the call.
-- **Queued per-command PRs:** CreateMeshes ridges, Set3DProjection, OpenView, SetModelViewOptions.
+All six implemented on the fork; **5/6 validated** (CreateView the holdout). Upstream status as of 2026-05-27:
+- ✅ **`CreateTexts`** — merged [ENZYME-APD#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391).
+- 🟡 **`OpenView`** — draft PR [ENZYME-APD#394](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/394); fork CI matrix 10/10 green, awaiting maintainer review.
+- 🟡 **`CreateMeshes` line-display fields** (`ridges`, `showLines`, plus expansion `contourPen`, `levelPen`, `lineTypeIndex`) — draft PR [ENZYME-APD#395](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/395); fork CI 10/10 green, awaiting maintainer review. **Once merged + shipped, the full topo demo runs on stock Tapir** (this PR closes the last pilot-critical gap; the others are non-pilot primitives).
+- 🔧 **`CreateView`** — `NewNavigatorView` returns `0x8106006a`; WIP, lowest value (OpenView covers navigation). **Next:** seed `sourceGuid`/`itemType` from the current Project-Map item before the call. Not in the upstream queue.
+- **Queued per-command PRs:** Set3DProjection, SetModelViewOptions (both non-pilot primitives; lower urgency).
 - ⬜ **Reload loop not hands-off:** suppress the startup "load assets from library" modal (pre-embed library, or use a project that doesn't trigger it).
 
 *(Contour-label gap — RESOLVED by the forked `CreateTexts`, wired into `run_demo.py`. See [[Summary - Finishing the Pilot]].)*
