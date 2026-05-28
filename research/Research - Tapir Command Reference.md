@@ -2,7 +2,7 @@
 
 Full inventory of JSON commands registered by the Tapir Archicad add-on. Pulled from [`AddOnMain.cpp`](https://github.com/ENZYME-APD/tapir-archicad-automation/blob/main/archicad-addon/Sources/AddOnMain.cpp) on 2026-05-18. These sit in the **`TapirCommand`** namespace and stack *on top of* Archicad's small official JSON API. Both community MCP servers ([[Research - Archicad MCPs]]) wrap these.
 
-**~134 Tapir commands across 14 groups** (upstream `main`, 2026-05-18 snapshot). Version column = the release that added the command. **Our fork adds 6 more** (CreateTexts, CreateMeshes ridge fields, Set3DProjection, CreateView[WIP], OpenView, SetModelViewOptions) — see [[Source - Tapir Fork Build Setup]]; CreateTexts is upstreaming as PR #391.
+**~134 Tapir commands across 14 groups** (upstream `main`, 2026-05-18 snapshot). Version column = the release that added the command. **Our fork adds 6 more** (CreateTexts, CreateMeshes ridge fields, Set3DProjection, CreateView[WIP], GoToView (originally `OpenView`), SetModelViewOptions) — see [[Source - Tapir Fork Build Setup]]; CreateTexts is upstreaming as PR #391.
 
 ## Topo pilot — commands that matter
 The pilot uses **`CreateMeshes`** (the mesh) + the fork's **`CreateTexts`** (contour labels), POSTed in one `run_demo.py` pass with `DeleteElements` to clear prior output and `FitInWindow` to frame it. Reading the DWG happens *outside* Archicad (Python + ezdxf); Tapir's surface starts after the payload is built.

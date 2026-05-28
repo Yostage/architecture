@@ -10,7 +10,7 @@ This repo is a working vault for an **Archicad automation** project. If you're r
 
 ## Default assumption: NO fork
 
-The pilot was built against a **forked Tapir** that Scott compiled locally. **Assume Shawn does *not* have that fork** — he's running **stock Tapir**. The fork originally added six commands/fields beyond stock; **three have since been upstreamed** (`CreateTexts` merged as ENZYME-APD#391; `OpenView` open as draft #394; `CreateMeshes` `ridges`/`showLines` open as draft #395). The remaining **three** still exist only in the fork and will fail on a stock install:
+The pilot was built against a **forked Tapir** that Scott compiled locally. **Assume Shawn does *not* have that fork** — he's running **stock Tapir**. The fork originally added six commands/fields beyond stock; **three have since been upstreamed** (`CreateTexts` merged as ENZYME-APD#391; `GoToView` open as draft #394; `CreateMeshes` `ridges`/`showLines` open as draft #395). The remaining **three** still exist only in the fork and will fail on a stock install:
 
 > `Set3DProjection`, `CreateView`, `SetModelViewOptions`.
 

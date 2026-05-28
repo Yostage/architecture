@@ -32,20 +32,20 @@ Iteration loop: edit `Sources/*Commands.cpp` + register in `AddOnMain.cpp` → i
 2. **CreateMeshes ridge fields** — `ridges` (AllSharp/AllSmooth/UserDefined → `smoothRidges`) + `showLines`; sets the drawing-set display at creation.
 3. **Set3DProjection** — `ACAPI_View_Change3DProjectionSets` (`ProjectionCommands.cpp`, new file; CMake auto-globs `Sources/`).
 4. **CreateView** — `ACAPI_Navigator_NewNavigatorView` (`NavigatorCommands.cpp`).
-5. **OpenView** — GetNavigatorItem → `ACAPI_Database_ChangeCurrentDatabase`.
+5. **OpenView** — GetNavigatorItem → `ACAPI_Database_ChangeCurrentDatabase`. *(Switched to `ACAPI_View_GoToView` during upstreaming and renamed to **GoToView** — see [[Notes - Tapir Upstreaming]].)*
 6. **SetModelViewOptions** — `ACAPI_Navigator_ChangeViewOptions`.
 
 ## Validation (2026-05-20, against the deployed fork via Deploy-folder hot-load)
 User-writable `Deploy\` registered in Archicad's Add-On Manager (official Tapir removed) so the fork loads without UAC. **5 of 6 working:**
 - ✅ **CreateTexts** — created Text incl. multi-line; riskiest (memo) passed first try. **Label gap closed.**
-- ✅ CreateMeshes `ridges:"UserDefined"`+`showLines`, ✅ Set3DProjection, ✅ SetModelViewOptions ("01 Site"), ✅ OpenView ("Site" view).
+- ✅ CreateMeshes `ridges:"UserDefined"`+`showLines`, ✅ Set3DProjection, ✅ SetModelViewOptions ("01 Site"), ✅ OpenView ("Site" view) *(later renamed GoToView)*.
 - ❌ **CreateView** — `NewNavigatorView` returns `0x8106006a` even from a savable window. Fixed two masking bugs (set nav item `db` to current; relaxed response schema so the real error surfaces) but create still fails — bare `API_NavigatorItem` needs `sourceGuid`/`itemType` from the current Project-Map item. WIP, lowest value.
 
 ## Cross-version CI (Mac × Win × AC25–29, green 2026-05-20)
 Only had the AC29 DevKit locally, so version issues showed only in CI:
 - `ACAPI_View_*3DProjectionSets`, `ACAPI_Navigator_NewNavigatorView`, `ACAPI_Navigator_*ViewOptions` absent from older DevKits → guarded those three Execute bodies at `#if defined(ServerMainVers_2900)` + "requires AC29" stub. **Those 3 are AC29-only** (threshold could drop if confirmed on an older DevKit).
 - MSVC `/WX` flags unused params (C2220) in the stubs → `(void) parameters;` (clang ignored via `-Wno-unused-parameter`, so Mac passed first).
-- **CreateTexts, mesh ridge fields, and OpenView build on all versions unchanged.**
+- **CreateTexts, mesh ridge fields, and OpenView (now GoToView) build on all versions unchanged.**
 
 **Reload-loop caveat:** relaunching with `TestProject.pla` pops a modal "load assets from library" dialog that blocks the JSON API until dismissed — loop isn't fully hands-off. Archicad also holds the `.apx` lock briefly after the API drops, so the deploy-copy retries. To fully automate: pre-embed the library, or use a project that doesn't trigger the dialog.
 
@@ -54,7 +54,7 @@ One command per PR (upstream convention) → clean per-command branches off `ori
 - **First PR: `CreateTexts`** — [ENZYME-APD#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391), branch `feat/create-texts`, single `feat(texts):` commit (4 files, +175/−0). CreateView WIP + `build_ac29.bat` dropped (kept on `tapir-backlog-commands`).
 - **Fork deleted and re-forked** — `Yostage/tapir-archicad-automation` was a standalone repo, not a real GitHub fork, so cross-repo PRs were blocked until re-forked.
 - **Verified green on the full AC25–29 × Win+Mac matrix** by running CI in the fork (first-time-contributor PRs can't trigger upstream CI without maintainer approval). PR marked ready for review.
-- **Queued:** CreateMeshes ridges, Set3DProjection (AC29-guarded), OpenView, SetModelViewOptions (AC29-guarded).
+- **Queued:** CreateMeshes ridges, Set3DProjection (AC29-guarded), OpenView (later renamed GoToView), SetModelViewOptions (AC29-guarded).
 - Global `ADDON_VERSION` bumped 1.4.0 → 1.4.2 (was lagging the per-command versions), committed to the dev branch with `reload_and_test.py`.
 
 ## Upstreaming status, conventions, review patterns

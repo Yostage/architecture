@@ -22,7 +22,7 @@ A translation table between **how Shawn (architect) talks** and **how this repo 
 | Term | What it is |
 |---|---|
 | **Tapir** | The Archicad add-on that exposes ~134 JSON commands on top of Archicad's small official API. Everything here talks to it. See [[Research - Tapir Command Reference]]. |
-| **The fork** | Scott's custom build of Tapir originally adding 6 commands/fields; 3 are now upstreamed (`CreateTexts` merged, `OpenView` + `CreateMeshes` `ridges`/`showLines` as draft PRs), 3 still fork-only — see CLAUDE.md. **Assume Shawn doesn't have any of them yet** (the upstreamed three still need to ship in a Tapir release). Stock Tapir = the public release. |
+| **The fork** | Scott's custom build of Tapir originally adding 6 commands/fields; 3 are now upstreamed (`CreateTexts` merged, `GoToView` (formerly `OpenView`) + `CreateMeshes` `ridges`/`showLines` as draft PRs), 3 still fork-only — see CLAUDE.md. **Assume Shawn doesn't have any of them yet** (the upstreamed three still need to ship in a Tapir release). Stock Tapir = the public release. |
 | **MCP** | The bridge that lets Claude call Tapir commands directly. |
 | **Stock / degraded path** | Running the pilot on public Tapir without the fork — see [[Guide - Stock Tapir (No Fork)]]. |
 | **Endpoint `127.0.0.1:19723`** | The local socket Tapir listens on; the scripts POST here. |
