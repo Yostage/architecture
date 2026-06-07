@@ -12,20 +12,19 @@ Pre-reqs:
 
 Produces: a property-line mesh with contour level lines + elevation labels.
 
-Requires the forked Tapir 1.4.2 loaded (built wherever you checked it out;
-Scott's is at D:\\code\\tapir-fork). Two fork features make this fully scripted,
-no manual Archicad steps:
+Requires stock Tapir 1.5.0+ loaded. Two features make this fully scripted, no
+manual Archicad steps:
   - the mesh is created with `ridges=UserDefined` + `showLines`, so the plan
     shows clean contour lines (not triangulation) without setting the Mesh tool
-    default by hand;
+    default by hand (CreateMeshes line-display fields, upstreamed as #395);
   - contour elevation labels are placed as standalone Text via `CreateTexts`
-    (stock Tapir's `CreateLabels` can't bind a standalone label).
-See [[Source - Tapir Fork Build Setup]] and Future Work.md.
+    (upstreamed as #391; stock Tapir's `CreateLabels` can't bind a standalone
+    label).
+Both shipped in Tapir 1.5.0 (2026-06-01).
 
-No fork? Don't run this script as-is — the send-texts step uses the fork-only
-CreateTexts and will error. Follow "Guide - Stock Tapir (No Fork).md": run the
-steps individually, strip the ridges/showLines fields, set the Mesh tool default
-for clean contours, and place labels by hand.
+On older Tapir (<=1.4.x) these two features aren't available — follow
+"Guide - Stock Tapir (No Fork).md" to run the steps individually with the manual
+workarounds. Easiest fix is to update Tapir to 1.5.0+.
 
 Run:
   .venv\\Scripts\\python.exe run_demo.py
@@ -56,9 +55,9 @@ def main():
     # project, not a real working file.
     step("Clear existing meshes/texts/labels", "send_to_tapir.py", "clear")
     step("POST mesh (ridges=UserDefined -> clean contour-line display)", "send_to_tapir.py", "send-mesh")
-    # Contour elevation labels via forked Tapir 1.4.2 CreateTexts (standalone
-    # Text elements — supersedes the old CreateLabels approach that couldn't
-    # place clean text). Requires the fork loaded; see Source - Tapir Fork Build Setup.
+    # Contour elevation labels via CreateTexts (standalone Text elements —
+    # supersedes the old CreateLabels approach that couldn't place clean text).
+    # Stock as of Tapir 1.5.0 (#391).
     step("POST contour elevation labels (CreateTexts)", "send_to_tapir.py", "send-texts")
     step("Fit the most recently created mesh in window", "fit_latest_mesh.py")
     print("\nDone. Mesh (property-line perimeter, user-defined ridges) + contour")

@@ -8,13 +8,15 @@ This repo is a working vault for an **Archicad automation** project. If you're r
 - **Scott** is the software/automation side; he wrote the scripts and these notes on his own Windows machine.
 - **Translate in both directions.** When you explain what the code does, put it in Archicad terms, not software jargon. When Shawn describes something in architect's language, map it to the repo's concepts before acting. The map is **[[Reference - Vocabulary Bridge]]** — read it.
 
-## Default assumption: NO fork
+## Default assumption: stock Tapir 1.5.0+
 
-The pilot was built against a **forked Tapir** that Scott compiled locally. **Assume Shawn does *not* have that fork** — he's running **stock Tapir**. The fork originally added six commands/fields beyond stock; **three have since been upstreamed** (`CreateTexts` merged as ENZYME-APD#391; `GoToView` open as draft #394; `CreateMeshes` `ridges`/`showLines` open as draft #395). The remaining **three** still exist only in the fork and will fail on a stock install:
+The pilot was built against a **forked Tapir** that Scott compiled locally, but **the entire pilot path now runs on stock Tapir** as of **Tapir 1.5.0 (released 2026-06-01)**. The fork originally added six commands/fields beyond stock; **three are now upstreamed and shipped in 1.5.0**: `CreateTexts` (ENZYME-APD#391), `CreateMeshes` `ridges`/`showLines` line-display fields (#395), and `ChangeWindow` + `navigatorItemId` for view activation (#398, which superseded the standalone `GoToView` draft #394 — #394 was closed unmerged). **Assume Shawn is on stock Tapir; make sure he's on 1.5.0 or newer** (the pilot scripts now call these as real APIs unconditionally). If he's stuck on ≤1.4.x, the two display features degrade — see **[[Guide - Stock Tapir (No Fork)]]** — but the fix is simply to update Tapir.
+
+The remaining **three** fork-only commands are still local to Scott's build and will fail on any stock install, including 1.5.0:
 
 > `Set3DProjection`, `CreateView`, `SetModelViewOptions`.
 
-Do **not** steer Shawn toward those as if they're available. If one would help, flag it explicitly as *"requires Scott's forked Tapir."* For the three upstreamed ones, they only reach Shawn once Tapir cuts a release that includes them — until then, treat as fork-only too. (Tapir's release cadence is irregular but averages ~20-30 days; latest was 1.4.0 on 2026-05-12. Realistic expectation for the upstreamed commands to land in a stock release: **late June / early July 2026**, assuming the two drafts move.) For how to run the pilot on stock Tapir — and what degrades — follow **[[Guide - Stock Tapir (No Fork)]]**. That is the primary path for Shawn.
+Do **not** steer Shawn toward those as if they're available. If one would help, flag it explicitly as *"requires Scott's forked Tapir."* None of them are in the pilot path.
 
 ## Environment notes
 

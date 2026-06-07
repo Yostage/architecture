@@ -1,28 +1,25 @@
-"""Attempt to programmatically activate a saved View Map entry by name.
+"""Activate a saved View Map entry by name — the real, working version.
 
-NEGATIVE RESULT — kept as a regression marker.
+POSITIVE RESULT as of Tapir 1.5.0 (2026-06-01). The earlier incarnation of this
+file was a negative-result marker: stock Tapir's `ChangeWindow` could only switch
+the active *window type* and could not apply a saved View's settings (camera
+angle, layer combination, scale, MVO, zoom). Activating a view "as if the user
+double-clicked it in the Navigator" had no Tapir command.
 
-What we tried (2026-05-19, against Archicad 29 + Tapir 1.4.0):
+That gap is now closed. Upstream PR #398 (shipped in Tapir 1.5.0) extended
+`ChangeWindow` to accept a `navigatorItemId`, which on AC27+ routes through
+`ACAPI_View_GoToView` and applies all the saved view parameters. (On AC25/26 the
+command returns NOTSUPPORTED for `navigatorItemId`; there is no view-settings
+path on those versions.)
+
+How it works now:
   1. Walk the ViewMap via API.GetNavigatorItemTree to find a view by name.
-  2. Resolve its navigatorItemId → databaseId via Tapir's
-     GetDatabaseIdFromNavigatorItemId. This works.
-  3. Call Tapir's ChangeWindow with windowType=3DModel + the resolved databaseId.
-     Fails with "databaseId does not belong to the requested windowType".
-  4. Trying other windowType values: "3D", "Perspective3D", "Axonometry3D", "View"
-     all fail with "Invalid parameter: windowType". Only "3DModel" is a valid
-     3D window type per ConvertWindowTypeToString in Tapir's source.
+  2. Call Tapir's ChangeWindow with that view's navigatorItemId. Done — no
+     GetDatabaseIdFromNavigatorItemId hop, no windowType guessing.
 
-Conclusion: Tapir's ChangeWindow only switches the active *window type*. It
-cannot apply a saved View's settings (camera angle, layer combination, scale,
-etc.) to the current window. There is no Tapir command for "open this saved
-view as if the user double-clicked it in the Navigator."
+Requires Tapir 1.5.0+ (stock). Archicad 27+ for the saved-view settings to apply.
 
-Workarounds:
-  - User opens the view manually: Navigator → View Map → double-click.
-  - Or extend Tapir with a new C++ command that wraps Archicad's ACAPI for
-    navigator-item activation. Several hours of work + an .apx rebuild.
-
-Usage (for posterity / future reattempts):
+Usage:
   python go_to_view.py "Physical Model"
 """
 
@@ -48,15 +45,14 @@ def raw_call(command: str, params=None):
 
 
 def find_view(target_name: str):
+    """Return the full navigatorItemId object for the named view, or None."""
     r = raw_call("API.GetNavigatorItemTree", {"navigatorTreeId": {"type": "ViewMap"}})
     root = r["result"]["navigatorTree"]["rootItem"]
 
     def walk(item):
-        nav = item.get("navigatorItem") or item.get("rootItem") or item
-        if "navigatorItem" in item:
-            nav = item["navigatorItem"]
+        nav = item["navigatorItem"] if "navigatorItem" in item else item
         if nav.get("name") == target_name:
-            return nav["navigatorItemId"]["guid"]
+            return nav["navigatorItemId"]
         for child in nav.get("children", []) or []:
             hit = walk(child)
             if hit:
@@ -65,12 +61,6 @@ def find_view(target_name: str):
 
     return walk(root)
 
-
-name = sys.argv[1] if len(sys.argv) > 1 else "Physical Model"
-guid = find_view(name)
-if not guid:
-    sys.exit(f"View not found: {name!r}")
-print(f"Found view {name!r}: {guid}")
 
 def tapir(name, params):
     body = {
@@ -90,19 +80,23 @@ def tapir(name, params):
         return json.loads(resp.read())
 
 
-# Resolve view's navigator item ID → database ID
-r = tapir("GetDatabaseIdFromNavigatorItemId", {"navigatorItemIds": [{"navigatorItemId": {"guid": guid}}]})
-print(json.dumps(r, indent=2))
-db_id = r["result"]["addOnCommandResponse"]["databases"][0]["databaseId"]
+def main():
+    name = sys.argv[1] if len(sys.argv) > 1 else "Physical Model"
+    nav_id = find_view(name)
+    if not nav_id:
+        sys.exit(f"View not found: {name!r}")
+    print(f"Found view {name!r}: {nav_id['guid']}")
 
-# Switch window to that database (3D in our case)
-for window_type in ["3D", "3DModel", "Perspective3D", "Axonometry3D", "View"]:
-    r2 = tapir("ChangeWindow", {"windowType": window_type, "databaseId": db_id})
-    success = r2["result"]["addOnCommandResponse"].get("success", False)
-    print(f"  windowType={window_type:20s} succeeded={success}")
-    if success:
-        print(f"    {json.dumps(r2)[:300]}")
-        break
-    else:
-        err = r2["result"]["addOnCommandResponse"].get("error", {}).get("message", "?")
-        print(f"    error: {err}")
+    # ChangeWindow + navigatorItemId (Tapir 1.5.0+): routes through
+    # ACAPI_View_GoToView on AC27+, applying the view's saved layer combo,
+    # scale, MVO, dim, and zoom — the real "open this view" action.
+    r = tapir("ChangeWindow", {"navigatorItemId": nav_id})
+    if r.get("succeeded"):
+        print("Switched to view (saved settings applied).")
+        return 0
+    print(json.dumps(r, indent=2))
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

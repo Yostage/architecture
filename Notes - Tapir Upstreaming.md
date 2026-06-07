@@ -6,17 +6,17 @@ Working notes for contributing the six Tapir commands built for the Archicad pil
 
 ## Status
 
-As of 2026-05-29:
+As of 2026-06-07. **All three upstreamed commands shipped in stock Tapir 1.5.0 (released 2026-06-01)** — the pilot now runs fork-free; see [[Guide - Stock Tapir (No Fork)]]. The pilot scripts have been updated to call these as real APIs unconditionally (`STOCK_TAPIR` toggle removed; `go_to_view.py` rewritten against the real `ChangeWindow`).
 
 | PR | Command | State | Notes |
 |----|---------|-------|-------|
-| [#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391) | `CreateTexts` | ✅ **MERGED** (2026-05-24) into `origin/main` as `a0c519d` | Review feedback addressed pre-merge (extract `ParseJustificationString` + `SetTextContentAndParagraphs`) |
-| [#395](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/395) | `CreateMeshes` line-display fields | ✅ **MERGED** (2026-05-28) into `origin/main` as `67b4620` | Cast→short fix landed in `ec623c0`. **This was the pilot-critical PR — `run_demo.py` will run on stock Tapir once a release ships with this commit.** |
-| [#394](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/394) | `GoToView` (renamed from `OpenView` 2026-05-28) | 🟡 **Superseded by #398** — leave open until maintainer closes | Branch `Yostage:feat/open-view`. After Scott explained the GoToView-vs-ChangeWindow semantic delta, tlorantfy proposed folding the capability into `ChangeWindow` instead. Reopened as #398. |
-| [#398](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/398) | `ChangeWindow` — add optional `navigatorItemId` | 🟡 OPEN, **review feedback pushed — awaiting fork CI + re-review** | Branch `Yostage:feat/change-window-to-view`. Original work was commit `4c57482`. tlorantfy reviewed (2026-05-29) and asked to make the input a `oneOf` (`NavigatorItemIdOrDatabaseIdAndWindowType`) so a bare `navigatorItemId` no longer needs `windowType`, and to delete the now-redundant type-match check. Done in commit `225ecd3` (AC29 build green; ResConv re-embedded the new common-schema def), pushed `4c57482..225ecd3` to the PR branch, replied "Sure, how's this?". **Next: confirm the AC25–29 × Win+Mac matrix goes green, then re-review/merge.** AC27+ routes through `ACAPI_View_GoToView`; AC25/26 rejects with `NOTSUPPORTED` (silent fallback dropped — see lesson below). |
-| — | `CreateView` | 🔧 WIP, lowest priority | Returns `0x8106006a` from `NewNavigatorView`. Not in upstream queue. |
-| — | `Set3DProjection` | ⬜ Queued | AC29-guarded; non-pilot primitive |
-| — | `SetModelViewOptions` | ⬜ Queued | AC29-guarded (check `MigrationHelper.hpp` first); non-pilot primitive |
+| [#391](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/391) | `CreateTexts` | ✅ **MERGED** (2026-05-27) as `a0c519d` · **shipped in 1.5.0** | Review feedback addressed pre-merge (extract `ParseJustificationString` + `SetTextContentAndParagraphs`) |
+| [#395](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/395) | `CreateMeshes` line-display fields | ✅ **MERGED** (2026-05-28) as `67b4620` · **shipped in 1.5.0** | Cast→short fix landed in `ec623c0`. The pilot-critical PR — `run_demo.py` runs on stock Tapir 1.5.0+ because of this. |
+| [#394](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/394) | `GoToView` (renamed from `OpenView` 2026-05-28) | ⛔ **CLOSED unmerged** — superseded by #398 | Branch `Yostage:feat/open-view`. After Scott explained the GoToView-vs-ChangeWindow semantic delta, tlorantfy proposed folding the capability into `ChangeWindow` instead. Reopened as #398, which is what shipped. |
+| [#398](https://github.com/ENZYME-APD/tapir-archicad-automation/pull/398) | `ChangeWindow` — add optional `navigatorItemId` | ✅ **MERGED** (2026-06-01) as `3c74ee2` · **shipped in 1.5.0** | Branch `Yostage:feat/change-window-to-view`. Original work `4c57482`; review fix `225ecd3` reshaped the input as a `oneOf` (`NavigatorItemIdOrDatabaseIdAndWindowType`) so a bare `navigatorItemId` no longer needs `windowType`, dropping two hand-written guards. AC27+ routes through `ACAPI_View_GoToView`; AC25/26 rejects with `NOTSUPPORTED` (silent fallback dropped — see lesson below). Canonical example: `Examples/change_window_to_view.py`. |
+| — | `CreateView` | 🔧 WIP, lowest priority | Returns `0x8106006a` from `NewNavigatorView`. Not in upstream queue. Still fork-only. |
+| — | `Set3DProjection` | ⬜ Queued | AC29-guarded; non-pilot primitive. Still fork-only. |
+| — | `SetModelViewOptions` | ⬜ Queued | AC29-guarded (check `MigrationHelper.hpp` first); non-pilot primitive. Still fork-only. |
 
 `tapir-backlog-commands` is the dev branch / safe backup holding all six commands including the CreateView WIP and the personal `build_ac29.bat` (also not upstreamed).
 

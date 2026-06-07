@@ -28,8 +28,9 @@ CONTOUR_LAYERS = {"CONT-HGH", "CONT-NML"}
 # MTEXT elevation labels live on the same layers as the contour lines.
 CONTOUR_LABEL_LAYERS = {"CONT-HGH", "CONT-NML"}
 OUTPUT_PATH = Path(__file__).parent / "createmeshes_payload.json"
-# Forked Tapir 1.4.2 CreateTexts payload (replaces the old CreateLabels approach,
-# which couldn't place clean standalone text).
+# Tapir 1.5.0+ CreateTexts payload (replaces the old CreateLabels approach,
+# which couldn't place clean standalone text). CreateTexts was upstreamed as
+# ENZYME-APD#391 and ships in stock Tapir 1.5.0.
 TEXTS_OUTPUT_PATH = Path(__file__).parent / "createtexts_payload.json"
 # Character height in mm for the contour elevation labels (tune to taste/scale).
 TEXT_HEIGHT_MM = 2.5
@@ -72,14 +73,6 @@ CENTER_TO_ORIGIN = True
 #   "points"   — one subline per vertex; no connectivity. Archicad free-TINs
 #                through them → smooth triangulated look (Shawn's stuck state).
 SUBLINE_MODE = "polyline"
-
-# Stock-Tapir mode. The `ridges`/`showLines` mesh fields exist ONLY in Scott's
-# forked Tapir; public/stock Tapir doesn't understand them and may reject the
-# whole payload. Set True to omit those fields and emit a stock-compatible
-# payload — then get the clean contour-line display via the Mesh tool default
-# instead (see "Guide - Stock Tapir (No Fork).md"). Labels (CreateTexts) are
-# still fork-only and must be placed by hand on stock Tapir.
-STOCK_TAPIR = False
 
 
 def coord3d(x: float, y: float, z: float) -> dict:
@@ -297,12 +290,13 @@ def build_payload(msp) -> tuple[dict, str]:
         "skirtLevel": 100.0 * FOOT_TO_METER,
         "floorIndex": 0,
     }
-    if not STOCK_TAPIR:
-        # Forked Tapir 1.4.2: show only the contour level lines in plan, not the
-        # triangulation — the drawing-set display, set at creation (no reliance
-        # on the Mesh tool default). Omitted on stock Tapir (STOCK_TAPIR=True).
-        mesh_data["ridges"] = "UserDefined"
-        mesh_data["showLines"] = True
+    # Show only the contour level lines in plan, not the triangulation — the
+    # drawing-set display, set at creation (no reliance on the Mesh tool
+    # default). These fields were upstreamed as ENZYME-APD#395 and ship in stock
+    # Tapir 1.5.0; on older Tapir (<=1.4.x) they are unrecognized — set the Mesh
+    # tool default by hand instead (see "Guide - Stock Tapir (No Fork).md").
+    mesh_data["ridges"] = "UserDefined"
+    mesh_data["showLines"] = True
 
     payload = {"meshesData": [mesh_data]}
     return payload, source, (offset_x, offset_y)
@@ -311,7 +305,7 @@ def build_payload(msp) -> tuple[dict, str]:
 def build_texts_payload(msp, offset_x_m: float, offset_y_m: float) -> dict:
     """One standalone Text per contour MTEXT, at its DWG position, sharing the
     mesh's ft→m + centering transform so labels land on the contour lines.
-    Uses forked Tapir's CreateTexts (textsData)."""
+    Uses Tapir's CreateTexts (textsData), stock as of 1.5.0."""
     texts = []
     for t in msp.query("MTEXT TEXT"):
         if t.dxf.layer not in CONTOUR_LABEL_LAYERS:
